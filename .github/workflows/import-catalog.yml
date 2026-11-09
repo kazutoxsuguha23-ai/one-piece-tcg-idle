@@ -1,0 +1,35 @@
+name: Importar catálogo
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 1 * *'
+permissions:
+  contents: write
+  actions: write
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Importar catálogo
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: node scripts/import-catalog.mjs
+      - name: Guardar cambios y republicar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data
+          if git diff --cached --quiet; then
+            echo "Sin cambios que guardar"
+          else
+            git commit -m "Actualizar catálogo de cartas"
+            git push
+            gh workflow run deploy.yml
+          fi
