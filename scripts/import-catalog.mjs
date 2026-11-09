@@ -189,20 +189,49 @@ function summaryText(cards, sets, stats) {
 }
 
 // ------------------------------------------------------------------- red
+// Explica el fallo de red con detalle (Node solo dice "fetch failed" y esconde la causa real).
+function describeError(e) {
+  const causa = e?.cause;
+  const partes = [e?.message ?? String(e)];
+  if (causa) partes.push(`causa: ${causa.code ?? ''} ${causa.message ?? causa}`.trim());
+  return partes.join(' | ');
+}
+
 async function fetchJson(url, intentos = 3) {
   for (let i = 1; i <= intentos; i += 1) {
     try {
       const r = await fetch(url, {
         headers: { 'User-Agent': 'OnePieceTCGIdle-importer (private fan project)', Accept: 'application/json' },
+        signal: AbortSignal.timeout(60000),
       });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      if (!r.ok) {
+        const cuerpo = (await r.text().catch(() => '')).slice(0, 200).replace(/\s+/g, ' ');
+        throw new Error(`HTTP ${r.status} ${r.statusText} ${cuerpo}`);
+      }
       return await r.json();
     } catch (e) {
-      if (i === intentos) throw new Error(`${url}: ${e.message}`);
-      await sleep(2000 * i);
+      console.log(`Intento ${i}/${intentos} fallido para ${url}: ${describeError(e)}`);
+      if (i === intentos) throw new Error(`${url}: ${describeError(e)}`);
+      await sleep(3000 * i);
     }
   }
   return null;
+}
+
+// Comprobación previa: ¿responde la web de la API desde GitHub?
+async function checkReachability() {
+  for (const url of ['https://optcgapi.com/', `${API_BASE}/allSets/`]) {
+    try {
+      const r = await fetch(url, {
+        headers: { 'User-Agent': 'OnePieceTCGIdle-importer (private fan project)' },
+        signal: AbortSignal.timeout(30000),
+      });
+      console.log(`Comprobación ${url}: HTTP ${r.status}`);
+      await r.arrayBuffer();
+    } catch (e) {
+      console.log(`Comprobación ${url}: FALLO -> ${describeError(e)}`);
+    }
+  }
 }
 
 function extractArray(data) {
@@ -235,6 +264,7 @@ async function main() {
     previousHash = old.content_hash ?? null;
   } catch { /* primera ejecución */ }
 
+  await checkReachability();
   const groups = [];
   for (const ep of ENDPOINTS) {
     const datos = extractArray(await fetchJson(`${API_BASE}${ep.path}`));
