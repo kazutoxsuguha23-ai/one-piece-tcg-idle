@@ -1,43 +1,61 @@
 import { useEffect, useState } from 'react';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { isConfigured } from './services/supabaseClient.js';
+import { useAuth } from './hooks/useAuth.js';
+import AuthScreen from './components/AuthScreen.jsx';
+import AdminPanel from './components/AdminPanel.jsx';
 import styles from './App.module.css';
 
+// Tecla que abre/cierra el menú de administrador (solo funciona con cuenta admin).
+const TECLA_ADMIN = 'F2';
+
 export default function App() {
-  const [estado, setEstado] = useState({
-    tipo: 'cargando',
-    texto: 'Comprobando conexión con Supabase...',
-  });
+  const { cargando, jugador, error, refrescar, cerrarSesion } = useAuth();
+  const [adminAbierto, setAdminAbierto] = useState(false);
+  const esAdmin = jugador?.profile?.role === 'admin';
 
   useEffect(() => {
-    if (!isConfigured) {
-      setEstado({
-        tipo: 'aviso',
-        texto: 'Falta pegar tu URL y tu clave pública en src/config.js',
-      });
-      return undefined;
+    if (!esAdmin) return undefined;
+    function alPulsar(e) {
+      if (e.key === TECLA_ADMIN) {
+        e.preventDefault();
+        setAdminAbierto((abierto) => !abierto);
+      }
     }
-    const controlador = new AbortController();
-    fetch(`${SUPABASE_URL}/auth/v1/settings`, {
-      headers: { apikey: SUPABASE_ANON_KEY },
-      signal: controlador.signal,
-    })
-      .then((respuesta) => {
-        if (!respuesta.ok) throw new Error(`Respuesta ${respuesta.status}`);
-        setEstado({ tipo: 'ok', texto: 'Conexión con Supabase correcta' });
-      })
-      .catch((error) => {
-        if (error.name === 'AbortError') return;
-        setEstado({ tipo: 'error', texto: `No se pudo conectar: ${error.message}` });
-      });
-    return () => controlador.abort();
-  }, []);
+    window.addEventListener('keydown', alPulsar);
+    return () => window.removeEventListener('keydown', alPulsar);
+  }, [esAdmin]);
+
+  if (!isConfigured) {
+    return (
+      <main className={styles.pantalla}>
+        <h1 className={styles.titulo}>One Piece TCG Idle</h1>
+        <div className={styles.aviso}>Falta pegar tu URL y tu clave pública en src/config.js</div>
+      </main>
+    );
+  }
+  if (cargando) {
+    return (
+      <main className={styles.pantalla}>
+        <h1 className={styles.titulo}>One Piece TCG Idle</h1>
+        <p className={styles.subtitulo}>Cargando...</p>
+      </main>
+    );
+  }
+  if (!jugador) return <AuthScreen aviso={error} />;
 
   return (
     <main className={styles.pantalla}>
       <h1 className={styles.titulo}>One Piece TCG Idle</h1>
-      <p className={styles.subtitulo}>Fase 2: estructura y configuración</p>
-      <div className={`${styles.estado} ${styles[estado.tipo]}`}>{estado.texto}</div>
+      <p className={styles.subtitulo}>Fase 3: cuenta y base de datos (la mesa 3D llega en la Fase 6)</p>
+      <div className={styles.datos}>
+        <strong>Jugador: {jugador.profile.username}</strong>
+        <span>Monedas: {Number(jugador.economy.coins).toLocaleString('es-ES')}</span>
+        {esAdmin && <span>Eres administrador. Pulsa {TECLA_ADMIN} para abrir el menú.</span>}
+      </div>
+      <button type="button" className={styles.boton} onClick={cerrarSesion}>Cerrar sesión</button>
+      {esAdmin && adminAbierto && (
+        <AdminPanel onClose={() => setAdminAbierto(false)} onChanged={refrescar} />
+      )}
     </main>
   );
 }

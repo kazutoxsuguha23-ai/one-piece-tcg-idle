@@ -1,0 +1,11 @@
+.pantalla { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; }
+.titulo { margin: 0; font-size: clamp(1.6rem, 5vw, 3rem); color: #e8b04a; text-align: center; }
+.tarjeta { width: min(380px, 100%); display: flex; flex-direction: column; gap: 14px; padding: 22px; background: #1a2430; border: 1px solid #33445a; border-radius: 14px; }
+.tarjeta label { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.tarjeta input { padding: 10px 12px; border-radius: 8px; border: 1px solid #3d5068; background: #0f1720; color: inherit; font-size: 1rem; }
+.pestanas { display: flex; gap: 8px; }
+.pestanas button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #3d5068; background: transparent; color: inherit; cursor: pointer; }
+.pestanas .activa { background: #e8b04a; color: #1a1205; font-weight: 700; border-color: #e8b04a; }
+.error { margin: 0; padding: 8px 10px; background: #7a2630; border-radius: 8px; font-size: 0.9rem; }
+.enviar { padding: 12px; border: 0; border-radius: 10px; background: #e8b04a; color: #1a1205; font-weight: 800; font-size: 1rem; cursor: pointer; }
+.enviar:disabled { opacity: 0.6; cursor: wait; }
