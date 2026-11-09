@@ -6,11 +6,13 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 const API_BASE = 'https://optcgapi.com/api';
+// "required": si falla, se cancela todo. Las opcionales se saltan con un aviso.
+// Las promos usan /allPromos/ (la ruta /allPromoCards/ de la documentación devuelve 404).
 const ENDPOINTS = [
-  { path: '/allSetCards/', group: 'set' },
-  { path: '/allSTCards/', group: 'starter' },
-  { path: '/allPromoCards/', group: 'promo' },
-  { path: '/allDonCards/', group: 'don' },
+  { paths: ['/allSetCards/'], group: 'set', required: true },
+  { paths: ['/allSTCards/'], group: 'starter', required: true },
+  { paths: ['/allPromos/', '/allPromoCards/'], group: 'promo', required: false },
+  { paths: ['/allDonCards/'], group: 'don', required: false },
 ];
 const OUT_DIR = 'public/data';
 const SOURCE = {
@@ -206,12 +208,14 @@ async function fetchJson(url, intentos = 3) {
       });
       if (!r.ok) {
         const cuerpo = (await r.text().catch(() => '')).slice(0, 200).replace(/\s+/g, ' ');
-        throw new Error(`HTTP ${r.status} ${r.statusText} ${cuerpo}`);
+        const fallo = new Error(`HTTP ${r.status} ${r.statusText} ${cuerpo}`);
+        fallo.noRetry = r.status >= 400 && r.status < 500 && r.status !== 429;
+        throw fallo;
       }
       return await r.json();
     } catch (e) {
       console.log(`Intento ${i}/${intentos} fallido para ${url}: ${describeError(e)}`);
-      if (i === intentos) throw new Error(`${url}: ${describeError(e)}`);
+      if (i === intentos || e.noRetry) throw new Error(`${url}: ${describeError(e)}`);
       await sleep(3000 * i);
     }
   }
@@ -267,8 +271,21 @@ async function main() {
   await checkReachability();
   const groups = [];
   for (const ep of ENDPOINTS) {
-    const datos = extractArray(await fetchJson(`${API_BASE}${ep.path}`));
-    console.log(`${ep.path}: ${datos.length} cartas`);
+    let datos = null;
+    for (const ruta of ep.paths) {
+      try {
+        datos = extractArray(await fetchJson(`${API_BASE}${ruta}`, ep.required ? 3 : 2));
+        console.log(`${ruta}: ${datos.length} cartas`);
+        break;
+      } catch (e) {
+        if (ep.required) throw e;
+        console.log(`AVISO: ${ruta} no disponible (${e.message.slice(0, 120)})`);
+      }
+    }
+    if (datos === null) {
+      console.log(`AVISO: se omite el grupo "${ep.group}" en esta importación.`);
+      datos = [];
+    }
     groups.push({ group: ep.group, cards: datos });
     await sleep(1500);
   }
