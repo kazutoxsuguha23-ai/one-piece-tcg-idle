@@ -2,4 +2,4 @@
 // Pega aquí la "Project URL" y la clave pública (anon / publishable) de tu proyecto Supabase.
 // NUNCA pegues aquí la clave "service_role" ni la "secret".
 export const SUPABASE_URL = 'PEGA_AQUI_TU_PROJECT_URL';
-export const SUPABASE_ANON_KEY = 'PEGA_AQUI_TU_CLAVE_PUBLICA';
+export const SUPABASE_ANON_KEY = 'sb_publishable_MTwN6GXFb0aC6_NyJbasCA_N_nOYa69';
