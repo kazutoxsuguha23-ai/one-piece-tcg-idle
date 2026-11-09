@@ -3,6 +3,7 @@ import { isConfigured } from './services/supabaseClient.js';
 import { useAuth } from './hooks/useAuth.js';
 import AuthScreen from './components/AuthScreen.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
+import CatalogCheck from './components/CatalogCheck.jsx';
 import styles from './App.module.css';
 
 // Tecla que abre/cierra el menú de administrador (solo funciona con cuenta admin).
@@ -46,12 +47,13 @@ export default function App() {
   return (
     <main className={styles.pantalla}>
       <h1 className={styles.titulo}>One Piece TCG Idle</h1>
-      <p className={styles.subtitulo}>Fase 3: cuenta y base de datos (la mesa 3D llega en la Fase 6)</p>
+      <p className={styles.subtitulo}>Fase 4: catálogo de cartas (la mesa 3D llega en la Fase 6)</p>
       <div className={styles.datos}>
         <strong>Jugador: {jugador.profile.username}</strong>
         <span>Monedas: {Number(jugador.economy.coins).toLocaleString('es-ES')}</span>
         {esAdmin && <span>Eres administrador. Pulsa {TECLA_ADMIN} para abrir el menú.</span>}
       </div>
+      <CatalogCheck />
       <button type="button" className={styles.boton} onClick={cerrarSesion}>Cerrar sesión</button>
       {esAdmin && adminAbierto && (
         <AdminPanel onClose={() => setAdminAbierto(false)} onChanged={refrescar} />
