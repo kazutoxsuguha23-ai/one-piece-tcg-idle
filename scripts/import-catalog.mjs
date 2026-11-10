@@ -26,6 +26,8 @@ const RARITY_CODES = {
   common: 'C', uncommon: 'UC', rare: 'R', 'super rare': 'SR', 'secret rare': 'SEC',
   leader: 'L', promo: 'P', special: 'SP', 'special card': 'SP', 'treasure rare': 'TR',
   don: 'DON', 'don!!': 'DON',
+  // La API real usa abreviaturas:
+  c: 'C', uc: 'UC', r: 'R', sr: 'SR', sec: 'SEC', l: 'L', tr: 'TR', p: 'P', sp: 'SP',
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -127,7 +129,7 @@ export function buildCatalog(groups, previousCards = []) {
   const usedIds = new Set();
   const seen = new Map();
   const setNames = new Map();
-  const stats = { raw: 0, skipped: 0, duplicates: 0, collisions: 0, retired: 0, unknownRarities: {} };
+  const stats = { raw: 0, skipped: 0, duplicates: 0, collisions: 0, retired: 0, unknownRarities: {}, unknownRaritySets: {} };
 
   for (const { group, cards } of groups) {
     for (const rawCard of cards) {
@@ -140,6 +142,7 @@ export function buildCatalog(groups, previousCards = []) {
       if (!setNames.has(res.card.set)) setNames.set(res.card.set, res.setName);
       if (!res.rarityKnown) {
         stats.unknownRarities[res.card.rarity] = (stats.unknownRarities[res.card.rarity] ?? 0) + 1;
+        (stats.unknownRaritySets[res.card.rarity] ??= new Set()).add(res.card.set);
       }
     }
   }
@@ -183,7 +186,7 @@ function summaryText(cards, sets, stats) {
     `- Ids con colisión resuelta: ${stats.collisions}`,
     `- Cartas retiradas conservadas: ${stats.retired}`,
     `- Arte alternativo: ${cards.filter((c) => c.alt).length} | Manga: ${cards.filter((c) => c.manga).length} | SP: ${cards.filter((c) => c.sp).length}`,
-    `- Rarezas no reconocidas (se guardan tal cual): ${JSON.stringify(stats.unknownRarities)}`,
+    `- Rarezas no reconocidas (se guardan tal cual): ${Object.entries(stats.unknownRarities).map(([r, n]) => `${r}: ${n} (sets: ${[...(stats.unknownRaritySets[r] ?? [])].slice(0, 10).join(', ')})`).join(' ; ') || 'ninguna'}`,
     '', '### Por rareza', ...Object.entries(porRareza).map(([r, n]) => `- ${r}: ${n}`),
     '', '### Por set', ...sets.map((s) => `- ${s.id} (${s.kind}) ${s.name}: ${s.card_count}`),
   ];
