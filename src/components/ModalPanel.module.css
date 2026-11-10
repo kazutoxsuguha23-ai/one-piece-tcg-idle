@@ -1,0 +1,6 @@
+.fondo { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: flex-start; padding: 16px; overflow-y: auto; }
+.ventana { width: min(700px, 100%); background: #131c28; border: 1px solid #e8b04a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.cabecera { display: flex; justify-content: space-between; align-items: center; }
+.cabecera h2 { margin: 0; color: #e8b04a; font-size: 1.2rem; }
+.cabecera button { padding: 8px 12px; border-radius: 8px; border: 1px solid #3d5068; background: #243246; color: inherit; cursor: pointer; }
+.contenido { display: flex; justify-content: center; }

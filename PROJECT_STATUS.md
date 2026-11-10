@@ -5,8 +5,9 @@
 - [x] Fase 2: Estructura y configuración
 - [x] Fase 3: Base de datos y autenticación
 - [x] Fase 4: Catálogo (5596 cartas, 61 sets, en JSON y en catalog_*)
-- [~] Fase 5: Economía idle (archivos entregados, pendiente de verificar)
-- [ ] Fases 6-12 pendientes
+- [x] Fase 5: Economía idle (verificada)
+- [~] Fase 6: Mesa 3D (entregada, pendiente de verificar en navegador)
+- [ ] Fases 7-12 pendientes
 
 ## Decisiones aprobadas
 - Catálogo: optcgapi.com -> public/data/*.json + tablas catalog_*. Importador: GitHub Action manual/mensual.
@@ -45,5 +46,17 @@
 - SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12).
 - Keep-alive anti-pausa de Supabase: pendiente. Avisos de Node 20 / ubuntu-latest en Actions: Fase 12.
 
+## Fase 6 — mesa 3D
+- App.jsx -> TableView (HUD HTML + escena lazy). Escena en src/components/table/: Table, CoinStack(+CoinBurst), Card3D, CameraRig, TableScene.
+- Texturas SIN descargas: fieltro y madera procedurales (proceduralTextures.js) y caras de carta dibujadas en canvas (cardTexture.js) = plan B sin imágenes/CORS.
+- Escaparate: las 5 cartas que más producen (3 en pantalla estrecha). Hover/selección = se levantan; clic = detalle + Recoger. Efectos por rareza: halo + chispas (Manga rosa, SP cian, SEC/TR oro, SR plata, Alt violeta).
+- Monedero + pila de monedas (escala logarítmica) + lluvia de monedas al recoger. Contador de monedas animado con GSAP.
+- Rendimiento: dpr 1-1.5, 1 sombra de 1024, sin postprocesado; calidad alta/baja (localStorage) y bajada automática con PerformanceMonitor. Canvas remonta al cambiar calidad.
+- Botones: Tienda(F7)/Álbum(F8)/Mejoras(F9) DESHABILITADOS con su fase; Colección, Catálogo, Calidad, Admin, Salir funcionan.
+- Validado aquí: sintaxis de los 29 archivos, imports/exports y nombres no declarados (tsc). NO renderizado (sin Three.js ni navegador en mi entorno).
+
+## Decisión pendiente para Fase 7
+- Imágenes reales en 3D: requieren proxy CORS (Cloudflare Worker gratuito, cuenta de Cloudflare) o se mantienen las cartas dibujadas. Algunas cartas no tienen imagen en la API: usarán carta dibujada.
+
 ## Siguiente
-Fase 6: mesa 3D (R3F, cámara, mesa, luces, sombras, monedero, producción, botones) + decisión de imágenes (CORS).
+Fase 7: sobres y apertura (catálogo de productos pack_products, precios, generador de sobres en SQL con probabilidades configurables, historial, anti-duplicado, apertura 3D con arrastre, revelado, duplicados).

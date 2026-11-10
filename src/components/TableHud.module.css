@@ -1,0 +1,20 @@
+.hud { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; padding: 12px; gap: 8px; }
+.hud button { pointer-events: auto; }
+.arriba { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.jugador { padding: 8px 12px; background: rgba(15,23,32,0.8); border: 1px solid #33445a; border-radius: 10px; font-weight: 700; }
+.monedero { padding: 8px 18px; background: rgba(15,23,32,0.85); border: 1px solid #e8b04a; border-radius: 12px; text-align: center; display: flex; flex-direction: column; }
+.monedero span { font-size: 0.7rem; opacity: 0.7; }
+.monedero strong { font-size: clamp(1.4rem, 4vw, 2.2rem); color: #ffcf4a; line-height: 1.1; }
+.estadisticas { display: flex; gap: 8px; padding: 8px 12px; background: rgba(15,23,32,0.8); border: 1px solid #33445a; border-radius: 10px; }
+.estadisticas div { display: flex; flex-direction: column; text-align: center; }
+.estadisticas span { font-size: 0.65rem; opacity: 0.7; }
+.estadisticas strong { font-size: 0.95rem; color: #e8b04a; }
+.aviso { align-self: center; padding: 8px 14px; background: rgba(107,83,22,0.95); border-radius: 10px; font-weight: 600; font-size: 0.9rem; }
+.vacio { align-self: center; max-width: 440px; padding: 10px 14px; background: rgba(15,23,32,0.85); border-radius: 10px; text-align: center; font-size: 0.9rem; }
+.abajo { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.recoger { padding: 12px 28px; border: 0; border-radius: 12px; background: #e8b04a; color: #1a1205; font-weight: 800; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.5); }
+.recoger:disabled { opacity: 0.5; cursor: default; }
+.botones { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.botones button { padding: 9px 12px; border-radius: 9px; border: 1px solid #3d5068; background: rgba(36,50,70,0.92); color: inherit; cursor: pointer; font-size: 0.85rem; }
+.botones button:disabled { opacity: 0.45; cursor: default; }
+@media (max-width: 600px) { .estadisticas { width: 100%; justify-content: space-around; } .botones button { padding: 8px 9px; font-size: 0.78rem; } }
