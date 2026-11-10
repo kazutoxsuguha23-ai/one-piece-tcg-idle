@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
-export const WALLET_POS = [4.1, 0, 0.9];
+export const WALLET_POS = [4.0, 0, -1.2];
 
 const MATERIAL_ORO = { color: '#ffcf4a', metalness: 0.4, roughness: 0.35, emissive: '#5a3c00', emissiveIntensity: 0.5 };
 

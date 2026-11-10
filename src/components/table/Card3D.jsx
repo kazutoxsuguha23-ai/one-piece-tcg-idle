@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import { AdditiveBlending } from 'three';
-import { getCardBackTexture, getCardFaceTexture } from '../../utils/cardTexture.js';
+import { getCardBackTexture, getCardFaceTexture, getGlowTexture } from '../../utils/cardTexture.js';
 
 // Efecto visual según la rareza / variante de la carta.
 export function tipoEfecto(c) {
@@ -23,6 +23,7 @@ export default function Card3D({ info, x, z, giro, seleccionada, conChispas, onS
   const [encima, setEncima] = useState(false);
   const cara = useMemo(() => getCardFaceTexture(info), [info]);
   const dorso = useMemo(() => getCardBackTexture(), []);
+  const brillo = useMemo(() => getGlowTexture(), []);
   const efecto = tipoEfecto(info);
   const levantada = encima || seleccionada;
 
@@ -32,7 +33,7 @@ export default function Card3D({ info, x, z, giro, seleccionada, conChispas, onS
     const paso = Math.min(1, delta * 10);
     g.position.y += ((levantada ? ALTURA_BASE + 0.55 : ALTURA_BASE) - g.position.y) * paso;
     g.rotation.x += ((levantada ? -Math.PI / 2 + 0.45 : -Math.PI / 2) - g.rotation.x) * paso;
-    if (halo.current) halo.current.material.opacity = 0.35 + Math.sin(estado.clock.elapsedTime * 2.2) * 0.15;
+    if (halo.current) halo.current.material.opacity = 0.6 + Math.sin(estado.clock.elapsedTime * 2.2) * 0.2;
   });
 
   return (
@@ -67,7 +68,7 @@ export default function Card3D({ info, x, z, giro, seleccionada, conChispas, onS
       {efecto && (
         <mesh ref={halo} position={[0, 0, -0.02]}>
           <planeGeometry args={[1.85, 2.45]} />
-          <meshBasicMaterial color={efecto.color} transparent opacity={0.4} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial map={brillo} color={efecto.color} transparent opacity={0.6} blending={AdditiveBlending} depthWrite={false} />
         </mesh>
       )}
       {efecto && conChispas && (

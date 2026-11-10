@@ -43,7 +43,7 @@ export default function Table() {
       </mesh>
 
       {/* Mazo decorativo */}
-      <mesh position={[-4.2, 0.18, 0.9]} rotation-y={0.12} castShadow receiveShadow>
+      <mesh position={[-4.0, 0.18, -1.3]} rotation-y={0.12} castShadow receiveShadow>
         <boxGeometry args={[1.4, 0.34, 1.96]} />
         <meshStandardMaterial attach="material-0" color="#e8e4d8" />
         <meshStandardMaterial attach="material-1" color="#e8e4d8" />

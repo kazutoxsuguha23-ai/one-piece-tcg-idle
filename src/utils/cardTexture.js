@@ -153,3 +153,36 @@ export function getCardBackTexture() {
   dorso = aTextura(c);
   return dorso;
 }
+
+// Máscara de brillo con bordes suaves (blanco con transparencia). Se tiñe con el color del efecto.
+let brillo = null;
+export function getGlowTexture() {
+  if (brillo) return brillo;
+  const ancho = 128;
+  const alto = 176;
+  const c = document.createElement('canvas');
+  c.width = ancho;
+  c.height = alto;
+  const ctx = c.getContext('2d');
+  const datos = ctx.createImageData(ancho, alto);
+  // Proporción que ocupa la carta (1.4 x 1.96) dentro del plano del brillo (1.85 x 2.45)
+  const mitadX = 1.4 / 1.85 / 2;
+  const mitadY = 1.96 / 2.45 / 2;
+  for (let y = 0; y < alto; y += 1) {
+    for (let x = 0; x < ancho; x += 1) {
+      const u = x / (ancho - 1) - 0.5;
+      const v = y / (alto - 1) - 0.5;
+      const dx = Math.max(0, Math.abs(u) - mitadX) / (0.5 - mitadX);
+      const dy = Math.max(0, Math.abs(v) - mitadY) / (0.5 - mitadY);
+      const d = Math.min(1, Math.hypot(dx, dy));
+      const i = (y * ancho + x) * 4;
+      datos.data[i] = 255;
+      datos.data[i + 1] = 255;
+      datos.data[i + 2] = 255;
+      datos.data[i + 3] = Math.round((1 - d) ** 2 * 255);
+    }
+  }
+  ctx.putImageData(datos, 0, 0);
+  brillo = new CanvasTexture(c);
+  return brillo;
+}

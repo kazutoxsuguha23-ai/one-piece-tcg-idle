@@ -18,8 +18,8 @@ function Escaparate({ destacadas, seleccionId, conChispas, onSelect }) {
           <Card3D
             key={info.card_id}
             info={info}
-            x={centro * 1.65}
-            z={0.8}
+            x={centro * 1.6}
+            z={1.0}
             giro={centro * -0.04}
             seleccionada={seleccionId === info.card_id}
             conChispas={conChispas}
@@ -44,7 +44,7 @@ export default function TableScene({ calidad, coins, destacadas, seleccionId, bu
     >
       <color attach="background" args={['#0b0f16']} />
       <fog attach="fog" args={['#0b0f16', 14, 30]} />
-      <PerformanceMonitor onDecline={onDecline} />
+      <PerformanceMonitor bounds={() => [35, 60]} onDecline={onDecline} />
       <CameraRig />
 
       <ambientLight intensity={0.6} />
