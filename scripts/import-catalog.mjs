@@ -27,7 +27,7 @@ const RARITY_CODES = {
   leader: 'L', promo: 'P', special: 'SP', 'special card': 'SP', 'treasure rare': 'TR',
   don: 'DON', 'don!!': 'DON',
   // La API real usa abreviaturas:
-  c: 'C', uc: 'UC', r: 'R', sr: 'SR', sec: 'SEC', l: 'L', tr: 'TR', p: 'P', sp: 'SP',
+  c: 'C', uc: 'UC', r: 'R', sr: 'SR', sec: 'SEC', l: 'L', tr: 'TR', p: 'P', sp: 'SP', pr: 'PR',
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -128,7 +128,7 @@ export function buildCatalog(groups, previousCards = []) {
   const known = new Map(previousCards.map((c) => [`${c.set}|${c.image_id}`, c.id]));
   const usedIds = new Set();
   const seen = new Map();
-  const setNames = new Map();
+  const nameVotes = new Map();
   const stats = { raw: 0, skipped: 0, duplicates: 0, collisions: 0, retired: 0, unknownRarities: {}, unknownRaritySets: {} };
 
   for (const { group, cards } of groups) {
@@ -139,13 +139,20 @@ export function buildCatalog(groups, previousCards = []) {
       const key = `${res.card.set}|${res.card.image_id}`;
       if (seen.has(key)) { stats.duplicates += 1; continue; }
       seen.set(key, res.card);
-      if (!setNames.has(res.card.set)) setNames.set(res.card.set, res.setName);
+      const votos = nameVotes.get(res.card.set) ?? new Map();
+      votos.set(res.setName, (votos.get(res.setName) ?? 0) + 1);
+      nameVotes.set(res.card.set, votos);
       if (!res.rarityKnown) {
         stats.unknownRarities[res.card.rarity] = (stats.unknownRarities[res.card.rarity] ?? 0) + 1;
         (stats.unknownRaritySets[res.card.rarity] ??= new Set()).add(res.card.set);
       }
     }
   }
+
+  // Nombre de cada set = el que más cartas repiten (hay filas con nombres de otros sets).
+  const setNames = new Map(
+    [...nameVotes].map(([id, v]) => [id, [...v.entries()].sort((a, b) => b[1] - a[1])[0][0]]),
+  );
 
   const entries = [...seen.entries()].sort(([a], [b]) => a.localeCompare(b));
   for (const [key, card] of entries) {

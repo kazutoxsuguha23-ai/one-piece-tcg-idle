@@ -15,7 +15,7 @@ function contar(lista, clave) {
 // y que las imágenes se pueden usar como textura 3D (CORS).
 export default function CatalogCheck() {
   const [estado, setEstado] = useState({ fase: 'cargando' });
-  const [cors, setCors] = useState('probando');
+  const [pruebas, setPruebas] = useState([]);
 
   useEffect(() => {
     let activo = true;
@@ -40,16 +40,33 @@ export default function CatalogCheck() {
     return elegidas;
   }, [estado]);
 
+  // Prueba CORS: una imagen por servidor + la candidata de la web oficial.
   useEffect(() => {
     if (estado.fase !== 'ok') return undefined;
-    const prueba = estado.cat.cards.find((c) => c.image);
-    if (!prueba) { setCors('sin imágenes'); return undefined; }
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => setCors('ok');
-    img.onerror = () => setCors('fallo');
-    img.src = prueba.image;
-    return () => { img.onload = null; img.onerror = null; };
+    const candidatas = [];
+    const hosts = new Set();
+    estado.cat.cards.forEach((carta) => {
+      if (!carta.image) return;
+      try {
+        const host = new URL(carta.image).host;
+        if (!hosts.has(host) && hosts.size < 4) { hosts.add(host); candidatas.push({ nombre: host, url: carta.image }); }
+      } catch { /* url no válida */ }
+    });
+    candidatas.push({
+      nombre: 'en.onepiece-cardgame.com (oficial, candidata)',
+      url: 'https://en.onepiece-cardgame.com/images/cardlist/card/OP01-001.png',
+    });
+    setPruebas(candidatas.map((x) => ({ ...x, resultado: 'probando' })));
+    const imagenes = candidatas.map((x, i) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      const poner = (resultado) => setPruebas((prev) => prev.map((p, j) => (j === i ? { ...p, resultado } : p)));
+      img.onload = () => poner('OK');
+      img.onerror = () => poner('FALLA');
+      img.src = x.url;
+      return img;
+    });
+    return () => imagenes.forEach((img) => { img.onload = null; img.onerror = null; });
   }, [estado]);
 
   if (estado.fase === 'cargando') return <p>Cargando catálogo...</p>;
@@ -68,13 +85,10 @@ export default function CatalogCheck() {
     <div className={styles.caja}>
       <strong>Catálogo: {cat.cards.length} cartas en {cat.sets.length} sets</strong>
       <span>Actualizado: {new Date(cat.generatedAt).toLocaleString('es-ES')}</span>
-      <span>
-        Imágenes como textura 3D (CORS):{' '}
-        {cors === 'ok' && 'correcto'}
-        {cors === 'fallo' && 'FALLA (usaremos el plan B)'}
-        {cors === 'probando' && 'probando...'}
-        {cors === 'sin imágenes' && 'no hay imágenes'}
-      </span>
+      <span>Imágenes como textura 3D (prueba CORS):</span>
+      <ul>
+        {pruebas.map((p) => <li key={p.nombre}>{p.nombre}: {p.resultado}</li>)}
+      </ul>
       <div className={styles.muestra}>
         {muestra.map((c) => (
           <figure key={c.id}>

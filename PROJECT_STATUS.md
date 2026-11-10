@@ -4,7 +4,7 @@
 - [x] Fase 1: Arquitectura
 - [x] Fase 2: Estructura y configuración
 - [x] Fase 3: Base de datos y autenticación (verificada)
-- [~] Fase 4: Importación de cartas (archivos entregados, pendiente de verificar con datos reales)
+- [~] Fase 4: Importación de cartas (importación real OK: 5596 cartas, 61 sets; pendiente confirmar tablas catalog_* en Supabase y test CORS)
 - [ ] Fases 5-12 pendientes
 
 ## Decisiones aprobadas
@@ -36,6 +36,15 @@
 - Sin tasas oficiales de aparición: se configuran en Fase 7 (ficticias, etiquetadas).
 - SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12).
 - Keep-alive anti-pausa de Supabase: pendiente.
+
+## Resultados reales de la importación (primera ejecución)
+- 5645 leídas, 5596 en catálogo, 0 descartadas, 49 duplicados. DON: 187 (ruta allDonCards OK). Promos: 1082 (ruta correcta: /allPromos/).
+- Arte alternativo 1203, Manga 49, SP 126. Rarezas: C, UC, R, SR, SEC, L, TR(7), PR(490), P(1), DON.
+- PR = muy probablemente "Promotion" (cartas de promoción dentro de sets). No confirmado en la API.
+- Sufijos de imagen: _pN = paralela (arte alt), _rN = reimpresión. Las paralelas conservan la rareza de la base (salvo excepciones, p. ej. TR).
+- OP14EB04 y OP15EB04 son sets combinados oficiales.
+- CORS de optcgapi.com: FALLA -> las imágenes no sirven como textura WebGL tal cual. Decisión en Fase 6 (proxy gratuito en Cloudflare Worker / CSS3D / plan B de carta generada).
+- Las imágenes de la API llevan marca "SAMPLE" (heredada de la fuente).
 
 ## Siguiente
 Fase 5: economía idle (producción por rareza/set/nivel, recoger, offline, dar carta y fijar nivel en admin).
