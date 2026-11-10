@@ -1,7 +1,8 @@
-.pantalla { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; }
+.pantalla { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; padding: 24px; text-align: center; }
 .titulo { margin: 0; font-size: clamp(1.6rem, 5vw, 3rem); color: #e8b04a; }
 .subtitulo { margin: 0; opacity: 0.8; }
 .datos { padding: 14px 20px; background: #1a2430; border: 1px solid #33445a; border-radius: 12px; display: flex; flex-direction: column; gap: 6px; }
 .aviso { padding: 10px 18px; border-radius: 10px; background: #6b5316; font-weight: 600; }
 .error { padding: 10px 18px; border-radius: 10px; background: #7a2630; font-weight: 600; }
 .boton { padding: 10px 18px; border-radius: 10px; border: 1px solid #3d5068; background: #243246; color: inherit; cursor: pointer; }
+.fila { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }

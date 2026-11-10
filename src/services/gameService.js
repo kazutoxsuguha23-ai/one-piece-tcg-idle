@@ -4,8 +4,12 @@ const MENSAJES = {
   forbidden: 'No tienes permisos de administrador',
   user_not_found: 'Ese usuario no existe',
   invalid_amount: 'Cantidad no válida (usa un número entero)',
-  invalid_quantity: 'Cantidad de sobres no válida (1-1000)',
+  invalid_quantity: 'Cantidad no válida (1-1000)',
+  invalid_level: 'Nivel no válido (1-100)',
   product_not_found: 'Ese producto no existe',
+  card_not_found: 'Esa carta no existe en el catálogo',
+  card_not_owned: 'El jugador no tiene esa carta',
+  too_many_copies: 'Demasiadas copias de una misma carta',
   not_authenticated: 'Sesión no válida, vuelve a entrar',
   profile_missing: 'Tu perfil no existe en la base de datos',
 };
@@ -42,3 +46,8 @@ export const adminSetCoins = (usuario, cantidad) =>
 export const adminGivePack = (usuario, producto, cantidad) =>
   llamar('admin_give_pack', { p_username: usuario, p_product_id: producto, p_quantity: cantidad });
 export const adminResetUser = (usuario) => llamar('admin_reset_user', { p_username: usuario });
+export const adminGiveCard = (usuario, carta, cantidad) =>
+  llamar('admin_give_card', { p_username: usuario, p_card_id: carta, p_quantity: cantidad });
+export const adminSetCardLevel = (usuario, carta, nivel) =>
+  llamar('admin_set_card_level', { p_username: usuario, p_card_id: carta, p_level: nivel });
+export const adminRecalcAll = () => llamar('admin_recalc_all');

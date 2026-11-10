@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  adminListUsers, adminGiveCoins, adminSetCoins, adminGivePack, adminResetUser, listProducts,
+  adminListUsers, adminGiveCoins, adminSetCoins, adminGivePack, adminResetUser,
+  adminGiveCard, adminSetCardLevel, adminRecalcAll, listProducts,
 } from '../services/gameService.js';
+import { loadCatalog } from '../services/catalogService.js';
 import styles from './AdminPanel.module.css';
 
 const ENTERO = /^-?\d+$/;
@@ -10,10 +12,15 @@ export default function AdminPanel({ onClose, onChanged }) {
   const [busqueda, setBusqueda] = useState('');
   const [usuarios, setUsuarios] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [catalogo, setCatalogo] = useState(null);
   const [objetivo, setObjetivo] = useState('');
   const [cantidad, setCantidad] = useState('1000');
   const [producto, setProducto] = useState('');
   const [numSobres, setNumSobres] = useState('1');
+  const [busquedaCarta, setBusquedaCarta] = useState('');
+  const [carta, setCarta] = useState(null);
+  const [numCartas, setNumCartas] = useState('1');
+  const [nivel, setNivel] = useState('10');
   const [mensaje, setMensaje] = useState(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -27,6 +34,7 @@ export default function AdminPanel({ onClose, onChanged }) {
 
   useEffect(() => {
     cargarUsuarios('');
+    loadCatalog().then(setCatalogo).catch(() => {});
     listProducts()
       .then((lista) => {
         setProductos(lista);
@@ -43,8 +51,16 @@ export default function AdminPanel({ onClose, onChanged }) {
     return () => window.removeEventListener('keydown', alPulsar);
   }, [onClose]);
 
-  async function ejecutar(accion, textoOk) {
-    if (!objetivo.trim()) {
+  const resultadosCartas = useMemo(() => {
+    const texto = busquedaCarta.trim().toLowerCase();
+    if (!catalogo || texto.length < 2) return [];
+    return catalogo.cards
+      .filter((c) => !c.retired && (c.name.toLowerCase().includes(texto) || c.id.toLowerCase().includes(texto)))
+      .slice(0, 12);
+  }, [catalogo, busquedaCarta]);
+
+  async function ejecutar(accion, textoOk, requiereObjetivo = true) {
+    if (requiereObjetivo && !objetivo.trim()) {
       setMensaje({ tipo: 'error', texto: 'Escribe o elige el nombre del jugador' });
       return;
     }
@@ -60,7 +76,7 @@ export default function AdminPanel({ onClose, onChanged }) {
     setOcupado(false);
   }
 
-  function comprobarCantidad(valor, permitirNegativo) {
+  function entero(valor, permitirNegativo = false) {
     if (!ENTERO.test(valor) || (!permitirNegativo && valor.startsWith('-'))) {
       setMensaje({ tipo: 'error', texto: 'Escribe un número entero válido' });
       return false;
@@ -69,19 +85,39 @@ export default function AdminPanel({ onClose, onChanged }) {
   }
 
   const darMonedas = () => {
-    if (!comprobarCantidad(cantidad, true)) return;
+    if (!entero(cantidad, true)) return;
     ejecutar(() => adminGiveCoins(objetivo.trim(), cantidad), (n) => `Saldo de ${objetivo}: ${n}`);
   };
   const fijarSaldo = () => {
-    if (!comprobarCantidad(cantidad, false)) return;
+    if (!entero(cantidad)) return;
     ejecutar(() => adminSetCoins(objetivo.trim(), cantidad), (n) => `Saldo de ${objetivo}: ${n}`);
   };
   const darSobres = () => {
-    if (!comprobarCantidad(numSobres, false)) return;
+    if (!entero(numSobres)) return;
     ejecutar(
       () => adminGivePack(objetivo.trim(), producto, Number(numSobres)),
       (n) => `${objetivo} tiene ahora ${n} de ese producto`,
     );
+  };
+  const darCarta = () => {
+    if (!carta) { setMensaje({ tipo: 'error', texto: 'Busca y elige una carta' }); return; }
+    if (!entero(numCartas)) return;
+    ejecutar(
+      () => adminGiveCard(objetivo.trim(), carta.id, Number(numCartas)),
+      (n) => `${objetivo} tiene ahora ${n} copias de ${carta.name}`,
+    );
+  };
+  const fijarNivel = () => {
+    if (!carta) { setMensaje({ tipo: 'error', texto: 'Busca y elige una carta' }); return; }
+    if (!entero(nivel)) return;
+    ejecutar(
+      () => adminSetCardLevel(objetivo.trim(), carta.id, Number(nivel)),
+      () => `${carta.name} de ${objetivo} ahora es nivel ${nivel}`,
+    );
+  };
+  const recalcular = () => {
+    if (!window.confirm('¿Recalcular la producción de TODOS los jugadores? Se les paga lo pendiente antes.')) return;
+    ejecutar(() => adminRecalcAll(), (n) => `Producción recalculada para ${n} jugadores`, false);
   };
   const resetear = () => {
     if (!window.confirm(`¿Seguro que quieres RESETEAR a ${objetivo}? Se borran sus cartas y sobres.`)) return;
@@ -131,6 +167,33 @@ export default function AdminPanel({ onClose, onChanged }) {
         </section>
 
         <section>
+          <h3>Cartas</h3>
+          <input
+            placeholder="Buscar carta por nombre o código (mín. 2 letras)..."
+            value={busquedaCarta}
+            onChange={(e) => setBusquedaCarta(e.target.value)}
+          />
+          <ul className={styles.lista}>
+            {resultadosCartas.map((c) => (
+              <li key={c.id}>
+                <button type="button" onClick={() => setCarta(c)}>
+                  {c.name} · {c.id} · {c.rarity}{c.manga ? ' · Manga' : c.sp ? ' · SP' : c.alt ? ' · Alt' : ''}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className={styles.nota}>Carta elegida: {carta ? `${carta.name} (${carta.id})` : 'ninguna'}</p>
+          <div className={styles.fila}>
+            <input value={numCartas} onChange={(e) => setNumCartas(e.target.value)} inputMode="numeric" aria-label="Copias" />
+            <button type="button" disabled={ocupado} onClick={darCarta}>Dar copias</button>
+          </div>
+          <div className={styles.fila}>
+            <input value={nivel} onChange={(e) => setNivel(e.target.value)} inputMode="numeric" aria-label="Nivel" />
+            <button type="button" disabled={ocupado} onClick={fijarNivel}>Fijar nivel (1-100)</button>
+          </div>
+        </section>
+
+        <section>
           <h3>Sobres / boosters / starter decks</h3>
           {productos.length === 0 ? (
             <p className={styles.nota}>Todavía no hay productos. Se crean en la Fase 7.</p>
@@ -148,13 +211,17 @@ export default function AdminPanel({ onClose, onChanged }) {
         </section>
 
         <section>
+          <h3>Economía</h3>
+          <button type="button" disabled={ocupado} onClick={recalcular}>Recalcular producción de todos</button>
+          <p className={styles.nota}>Úsalo después de cambiar la clave "economy" en game_config o de editar niveles a mano.</p>
+        </section>
+
+        <section>
           <h3>Zona peligrosa</h3>
           <button type="button" className={styles.peligro} disabled={ocupado} onClick={resetear}>
             Resetear jugador
           </button>
         </section>
-
-        <p className={styles.nota}>Dar cartas y cambiar niveles se añade en la Fase 5, junto con la economía.</p>
       </div>
     </div>
   );

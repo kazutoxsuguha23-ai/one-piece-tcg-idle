@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { isConfigured } from './services/supabaseClient.js';
 import { useAuth } from './hooks/useAuth.js';
+import { useEconomy } from './hooks/useEconomy.js';
 import AuthScreen from './components/AuthScreen.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
 import CatalogCheck from './components/CatalogCheck.jsx';
+import EconomyPanel from './components/EconomyPanel.jsx';
 import styles from './App.module.css';
 
 // Tecla que abre/cierra el menú de administrador (solo funciona con cuenta admin).
@@ -11,7 +13,9 @@ const TECLA_ADMIN = 'F2';
 
 export default function App() {
   const { cargando, jugador, error, refrescar, cerrarSesion } = useAuth();
+  const economia = useEconomy(jugador);
   const [adminAbierto, setAdminAbierto] = useState(false);
+  const [verCatalogo, setVerCatalogo] = useState(false);
   const esAdmin = jugador?.profile?.role === 'admin';
 
   useEffect(() => {
@@ -47,14 +51,18 @@ export default function App() {
   return (
     <main className={styles.pantalla}>
       <h1 className={styles.titulo}>One Piece TCG Idle</h1>
-      <p className={styles.subtitulo}>Fase 4: catálogo de cartas (la mesa 3D llega en la Fase 6)</p>
-      <div className={styles.datos}>
-        <strong>Jugador: {jugador.profile.username}</strong>
-        <span>Monedas: {Number(jugador.economy.coins).toLocaleString('es-ES')}</span>
-        {esAdmin && <span>Eres administrador. Pulsa {TECLA_ADMIN} para abrir el menú.</span>}
+      <p className={styles.subtitulo}>
+        Fase 5: economía idle (la mesa 3D llega en la Fase 6) · Jugador: {jugador.profile.username}
+        {esAdmin && ` · Admin: pulsa ${TECLA_ADMIN}`}
+      </p>
+      <EconomyPanel economia={economia} />
+      <div className={styles.fila}>
+        <button type="button" className={styles.boton} onClick={() => setVerCatalogo((v) => !v)}>
+          {verCatalogo ? 'Ocultar' : 'Ver'} estado del catálogo
+        </button>
+        <button type="button" className={styles.boton} onClick={cerrarSesion}>Cerrar sesión</button>
       </div>
-      <CatalogCheck />
-      <button type="button" className={styles.boton} onClick={cerrarSesion}>Cerrar sesión</button>
+      {verCatalogo && <CatalogCheck />}
       {esAdmin && adminAbierto && (
         <AdminPanel onClose={() => setAdminAbierto(false)} onChanged={refrescar} />
       )}
