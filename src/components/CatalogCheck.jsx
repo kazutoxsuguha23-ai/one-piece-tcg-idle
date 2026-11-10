@@ -11,6 +11,12 @@ function contar(lista, clave) {
   return resultado;
 }
 
+function ImgPrueba({ url }) {
+  const [fallo, setFallo] = useState(false);
+  if (fallo) return <div className={styles.noCarga}>no carga</div>;
+  return <img src={url} alt="" loading="lazy" onError={() => setFallo(true)} />;
+}
+
 // Panel de comprobación de la Fase 4: confirma que el catálogo se ha importado
 // y que las imágenes se pueden usar como textura 3D (CORS).
 export default function CatalogCheck() {
@@ -97,6 +103,19 @@ export default function CatalogCheck() {
           </figure>
         ))}
       </div>
+      <details>
+        <summary>Comparar fuentes de imagen (marca SAMPLE)</summary>
+        <p>Misma carta desde 3 fuentes. Mira cuál no lleva la marca. Las dos últimas son pruebas con una dirección sin verificar para cada carta.</p>
+        <div className={styles.comparador}>
+          {muestra.slice(0, 4).map((c) => (
+            <div key={c.id} className={styles.filaComp}>
+              <figure><ImgPrueba url={c.image} /><figcaption>API · {c.id}</figcaption></figure>
+              <figure><ImgPrueba url={`https://en.onepiece-cardgame.com/images/cardlist/card/${c.image_id}.png`} /><figcaption>Web oficial</figcaption></figure>
+              <figure><ImgPrueba url={`https://images.onepiecedb.io/images/${c.code.split('-')[0]}/${c.image_id}.png`} /><figcaption>OnePieceDB</figcaption></figure>
+            </div>
+          ))}
+        </div>
+      </details>
       <details>
         <summary>Rarezas</summary>
         <ul>{Object.entries(porRareza).map(([r, n]) => <li key={r}>{r}: {n}</li>)}</ul>

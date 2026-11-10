@@ -1,0 +1,18 @@
+.fondo { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: stretch; padding: 16px; }
+.ventana { width: min(980px, 100%); background: #1a2430; border: 1px solid #e8b04a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; text-align: left; }
+.cabecera { display: flex; justify-content: space-between; align-items: center; }
+.cabecera h2 { margin: 0; color: #e8b04a; font-size: 1.2rem; }
+.ventana button, .ventana select, .ventana input { padding: 9px 11px; border-radius: 8px; border: 1px solid #3d5068; background: #243246; color: inherit; font-size: 0.95rem; }
+.controles { display: flex; gap: 8px; flex-wrap: wrap; }
+.controles select { flex: 2 1 260px; }
+.controles input { flex: 1 1 180px; background: #0f1720; }
+.cuenta { margin: 0; opacity: 0.8; font-size: 0.85rem; }
+.error { margin: 0; padding: 8px 10px; background: #7a2630; border-radius: 8px; }
+.cuadricula { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.carta { display: flex; flex-direction: column; gap: 4px; padding: 6px; text-align: center; cursor: pointer; }
+.carta img, .sinImagen { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: 6px; background: #0f1720; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+.carta:hover { border-color: #e8b04a; }
+.marcada { border-color: #e8b04a !important; box-shadow: 0 0 0 2px #e8b04a; }
+.nombre { font-size: 0.78rem; font-weight: 600; line-height: 1.15; }
+.carta small { font-size: 0.65rem; opacity: 0.7; }
+.mas { align-self: center; }

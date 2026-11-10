@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   adminListUsers, adminGiveCoins, adminSetCoins, adminGivePack, adminResetUser,
   adminGiveCard, adminSetCardLevel, adminRecalcAll, listProducts,
 } from '../services/gameService.js';
-import { loadCatalog } from '../services/catalogService.js';
+import CardPicker from './CardPicker.jsx';
 import styles from './AdminPanel.module.css';
 
 const ENTERO = /^-?\d+$/;
@@ -12,13 +12,14 @@ export default function AdminPanel({ onClose, onChanged }) {
   const [busqueda, setBusqueda] = useState('');
   const [usuarios, setUsuarios] = useState([]);
   const [productos, setProductos] = useState([]);
-  const [catalogo, setCatalogo] = useState(null);
   const [objetivo, setObjetivo] = useState('');
   const [cantidad, setCantidad] = useState('1000');
   const [producto, setProducto] = useState('');
   const [numSobres, setNumSobres] = useState('1');
-  const [busquedaCarta, setBusquedaCarta] = useState('');
   const [carta, setCarta] = useState(null);
+  const [pickerAbierto, setPickerAbierto] = useState(false);
+  const pickerRef = useRef(false);
+  pickerRef.current = pickerAbierto;
   const [numCartas, setNumCartas] = useState('1');
   const [nivel, setNivel] = useState('10');
   const [mensaje, setMensaje] = useState(null);
@@ -34,7 +35,6 @@ export default function AdminPanel({ onClose, onChanged }) {
 
   useEffect(() => {
     cargarUsuarios('');
-    loadCatalog().then(setCatalogo).catch(() => {});
     listProducts()
       .then((lista) => {
         setProductos(lista);
@@ -45,19 +45,12 @@ export default function AdminPanel({ onClose, onChanged }) {
 
   useEffect(() => {
     function alPulsar(e) {
-      if (e.key === 'Escape') onClose();
+      // Si el selector de cartas está abierto, Esc lo cierra a él (y no al menú).
+      if (e.key === 'Escape' && !pickerRef.current) onClose();
     }
     window.addEventListener('keydown', alPulsar);
     return () => window.removeEventListener('keydown', alPulsar);
   }, [onClose]);
-
-  const resultadosCartas = useMemo(() => {
-    const texto = busquedaCarta.trim().toLowerCase();
-    if (!catalogo || texto.length < 2) return [];
-    return catalogo.cards
-      .filter((c) => !c.retired && (c.name.toLowerCase().includes(texto) || c.id.toLowerCase().includes(texto)))
-      .slice(0, 12);
-  }, [catalogo, busquedaCarta]);
 
   async function ejecutar(accion, textoOk, requiereObjetivo = true) {
     if (requiereObjetivo && !objetivo.trim()) {
@@ -168,21 +161,20 @@ export default function AdminPanel({ onClose, onChanged }) {
 
         <section>
           <h3>Cartas</h3>
-          <input
-            placeholder="Buscar carta por nombre o código (mín. 2 letras)..."
-            value={busquedaCarta}
-            onChange={(e) => setBusquedaCarta(e.target.value)}
-          />
-          <ul className={styles.lista}>
-            {resultadosCartas.map((c) => (
-              <li key={c.id}>
-                <button type="button" onClick={() => setCarta(c)}>
-                  {c.name} · {c.id} · {c.rarity}{c.manga ? ' · Manga' : c.sp ? ' · SP' : c.alt ? ' · Alt' : ''}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p className={styles.nota}>Carta elegida: {carta ? `${carta.name} (${carta.id})` : 'ninguna'}</p>
+          <div className={styles.fila}>
+            <button type="button" onClick={() => setPickerAbierto(true)}>Elegir carta del catálogo...</button>
+          </div>
+          {carta ? (
+            <div className={styles.elegida}>
+              {carta.image && <img src={carta.image} alt="" />}
+              <span>
+                <strong>{carta.name}</strong><br />
+                {carta.id} · {carta.rarity}{carta.manga ? ' · Manga' : carta.sp ? ' · SP' : carta.alt ? ' · Alt' : ''}
+              </span>
+            </div>
+          ) : (
+            <p className={styles.nota}>Carta elegida: ninguna</p>
+          )}
           <div className={styles.fila}>
             <input value={numCartas} onChange={(e) => setNumCartas(e.target.value)} inputMode="numeric" aria-label="Copias" />
             <button type="button" disabled={ocupado} onClick={darCarta}>Dar copias</button>
@@ -223,6 +215,9 @@ export default function AdminPanel({ onClose, onChanged }) {
           </button>
         </section>
       </div>
+      {pickerAbierto && (
+        <CardPicker seleccionada={carta} onSelect={setCarta} onClose={() => setPickerAbierto(false)} />
+      )}
     </div>
   );
 }

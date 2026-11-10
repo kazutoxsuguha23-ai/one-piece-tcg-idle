@@ -30,6 +30,12 @@
 - Promover admin: update public.profiles set role='admin' where username_lower='TU_USUARIO';
 - Cerrar registro: update public.game_config set value='false'::jsonb where key='registration_open';
 
+## Selector visual de cartas (admin)
+- CardPicker.jsx: ventana con desplegable de sets (agrupados por tipo), filtro de rareza y de texto, cuadrícula con imágenes (60 en 60).
+- Comprobación de completitud: OP01 = 154 filas (coincide con la base oficial japonesa: 121 + 33 paralelas). PRB01: 309 vs 319 en la base japonesa; OP17: 161 vs ~169 (119 + 39 paralelas + 11 SP). Posibles huecos de la API o diferencias EN/JP: revisar en el selector.
+- El importador ahora lista ejemplos de las duplicadas ignoradas (posible causa de huecos).
+- Marca SAMPLE: viene de las imágenes oficiales (la API usa los id de imagen de la web oficial). No se quita con ajustes. CatalogCheck compara 3 fuentes.
+
 ## Problemas conocidos / riesgos
 - SQL de Fase 5 y front sin probar en mi entorno (sin Postgres ni red).
 - Valores económicos (bases, multiplicadores) son una primera propuesta: equilibrar jugando; precios de sobres en Fase 7.

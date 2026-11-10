@@ -129,7 +129,7 @@ export function buildCatalog(groups, previousCards = []) {
   const usedIds = new Set();
   const seen = new Map();
   const nameVotes = new Map();
-  const stats = { raw: 0, skipped: 0, duplicates: 0, collisions: 0, retired: 0, unknownRarities: {}, unknownRaritySets: {} };
+  const stats = { raw: 0, skipped: 0, duplicates: 0, collisions: 0, retired: 0, unknownRarities: {}, unknownRaritySets: {}, duplicateExamples: [] };
 
   for (const { group, cards } of groups) {
     for (const rawCard of cards) {
@@ -137,7 +137,13 @@ export function buildCatalog(groups, previousCards = []) {
       const res = normalizeCard(rawCard, group);
       if (!res) { stats.skipped += 1; continue; }
       const key = `${res.card.set}|${res.card.image_id}`;
-      if (seen.has(key)) { stats.duplicates += 1; continue; }
+      if (seen.has(key)) {
+        stats.duplicates += 1;
+        if (stats.duplicateExamples.length < 60) {
+          stats.duplicateExamples.push(`${key} -> "${res.card.name}" (ya había: "${seen.get(key).name}")`);
+        }
+        continue;
+      }
       seen.set(key, res.card);
       const votos = nameVotes.get(res.card.set) ?? new Map();
       votos.set(res.setName, (votos.get(res.setName) ?? 0) + 1);
@@ -194,6 +200,7 @@ function summaryText(cards, sets, stats) {
     `- Cartas retiradas conservadas: ${stats.retired}`,
     `- Arte alternativo: ${cards.filter((c) => c.alt).length} | Manga: ${cards.filter((c) => c.manga).length} | SP: ${cards.filter((c) => c.sp).length}`,
     `- Rarezas no reconocidas (se guardan tal cual): ${Object.entries(stats.unknownRarities).map(([r, n]) => `${r}: ${n} (sets: ${[...(stats.unknownRaritySets[r] ?? [])].slice(0, 10).join(', ')})`).join(' ; ') || 'ninguna'}`,
+    '', '### Duplicadas ignoradas (ejemplos)', ...(stats.duplicateExamples.length ? stats.duplicateExamples.map((d) => `- ${d}`) : ['- ninguna']),
     '', '### Por rareza', ...Object.entries(porRareza).map(([r, n]) => `- ${r}: ${n}`),
     '', '### Por set', ...sets.map((s) => `- ${s.id} (${s.kind}) ${s.name}: ${s.card_count}`),
   ];
