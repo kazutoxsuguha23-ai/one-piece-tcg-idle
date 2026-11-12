@@ -1,62 +1,42 @@
 # PROJECT_STATUS — One Piece TCG Idle
 
 ## Fases
-- [x] Fase 1: Arquitectura
-- [x] Fase 2: Estructura y configuración
-- [x] Fase 3: Base de datos y autenticación
-- [x] Fase 4: Catálogo (5596 cartas, 61 sets, en JSON y en catalog_*)
-- [x] Fase 5: Economía idle (verificada)
-- [~] Fase 6: Mesa 3D (entregada, pendiente de verificar en navegador)
-- [ ] Fases 7-12 pendientes
+- [x] Fases 1-5 (arquitectura, estructura, BD+auth+admin, catálogo, economía) — verificadas
+- [~] Fase 6 (mesa 3D): REHECHA con el diseño nuevo (sin cartas en la mesa)
+- [~] Fase 7 (sobres y apertura): entregada, pendiente de verificar
+- [ ] Fase 8 Álbum 3D (+ reclamar producción) · Fase 9 Mejoras y duplicados · Fases 10-12
 
-## Decisiones aprobadas
-- Catálogo: optcgapi.com -> public/data/*.json + tablas catalog_*. Importador: GitHub Action manual/mensual.
-- Sin recuperación de contraseña. Email interno <usuario>@opidle.app. Repo PÚBLICO. Autoridad en Postgres (RPC).
-- Admin: tecla F2. Un solo Edge Function (register).
-- CORS: las imágenes de optcgapi.com y la candidata de Bandai FALLAN como textura WebGL. Decisión en Fase 6 (proxy Cloudflare Worker recomendado / CSS3D / plan B).
+## Diseño de la mesa (decidido por el usuario)
+- La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
+- Inspección 3D del sobre: arrastrar = girar; deslizar por la parte de arriba hacia un lado = rasgar/abrir; botón "Abrir sobre" alternativo; zoom con rueda y botones.
+- Revelado: las cartas salen una a una (clic = siguiente, arrastrar = girar), con efectos según rareza; pantalla de resultados (nuevas/repetidas).
+- Las cartas se ven e inspeccionan en el ÁLBUM (Fase 8), donde también se RECLAMA la producción. Mientras tanto se reclama en "Colección".
 
-## Fase 5 — modelo económico
-- Producción/s de una carta = base_rareza x variante(alt 2 / sp 4 / manga 6) x set(por tipo) x nivel x mejoras(upgrades.prod_mult).
-- Nivel: (1 + (n-1)*0.10) x 2^floor(n/25).  Todo en game_config clave "economy" (editable en Supabase).
-- Cada carta acumula desde last_collected_at hasta un máximo de offline_cap_seconds (28800 = 8 h) + upgrades.storage_bonus_seconds.
-  Ese mismo tope vale online y offline. Reloj SIEMPRE del servidor.
-- Recoger: collect_card(id) y collect_all(). Se conserva la fracción de moneda no pagada (no se pierde por recoger a menudo).
-- Cambiar una carta/nivel/mejora/config => recalc_player_production(user): primero paga lo pendiente al ritmo antiguo.
-- Admin (F2): dar carta, fijar nivel, recalcular producción de todos.
-- Producción cacheada en player_cards.production_per_sec y player_economy.production_per_sec.
-- Cliente: useEconomy (estimación visual cada 0,5 s, corregida por el servidor), EconomyPanel (provisional hasta Fase 6), format.js.
+## Fase 7 — qué hay
+- SQL 0003_sobres.sql: purchase_history, pick_weighted, pick_card_for_tier, sync_pack_products (+admin_sync_products), buy_pack, open_pack. Crea un producto por set (booster 1000+250*n, extra 2500, premium 6000, starter 3000).
+- Sobre aleatorio: 6 cartas = 3x{C85,UC15} + 2x{UC100} + 1x{R62,SR18,L6,ALT8,SEC3,SP2,MANGA1}. Premium con mejores tiradas. Starter deck = todas sus cartas base. TODO configurable en pack_products.config. Probabilidades FICTICIAS (no oficiales).
+- Idempotencia: request_id único por compra/apertura (si se repite, no se duplica).
+- Front: packService, usePacks, packTexture (sobres dibujados), imageLoader (proxy CORS), PackModel/PackPile/InspectPack/RevealStage, ShopPanel, ResultsPanel, TableView (máquina de estados), TableHud.
+- Rendimiento: dpr 1-1.25, 1 sombra de 1024, sin chispas ni sombras en calidad baja, PerformanceMonitor a 25 fps.
+
+## Imágenes reales (pendiente, opcional)
+- Requiere crear el proxy gratuito de Cloudflare (cloudflare/image-proxy.js) y pegar su URL en src/imageConfig.js (IMAGE_PROXY_URL).
+- Sin proxy: cartas y sobres se dibujan por código (funciona igual).
+- Sobres: config.art_url de los OPxx apunta a images.scrydex.com/onepiece/OPxx-s1/large (NO verificado). Si falla, se usa el sobre dibujado. Se puede editar art_url en pack_products.config.
+- Cartas por sobre: 6 (página oficial asia-en); un minorista dice 12 para inglés. Configurable (slots).
 
 ## Ajustes manuales en Supabase
 - Authentication: "Allow new users to sign up" DESACTIVADO. Edge Function register con "Verify JWT" desactivado.
 - Promover admin: update public.profiles set role='admin' where username_lower='TU_USUARIO';
 - Cerrar registro: update public.game_config set value='false'::jsonb where key='registration_open';
 
-## Selector visual de cartas (admin)
-- CardPicker.jsx: ventana con desplegable de sets (agrupados por tipo), filtro de rareza y de texto, cuadrícula con imágenes (60 en 60).
-- Comprobación de completitud: OP01 = 154 filas (coincide con la base oficial japonesa: 121 + 33 paralelas). PRB01: 309 vs 319 en la base japonesa; OP17: 161 vs ~169 (119 + 39 paralelas + 11 SP). Posibles huecos de la API o diferencias EN/JP: revisar en el selector.
-- El importador ahora lista ejemplos de las duplicadas ignoradas (posible causa de huecos).
-- Marca SAMPLE: viene de las imágenes oficiales (la API usa los id de imagen de la web oficial). No se quita con ajustes. CatalogCheck compara 3 fuentes.
-
 ## Problemas conocidos / riesgos
-- SQL de Fase 5 y front sin probar en mi entorno (sin Postgres ni red).
-- Valores económicos (bases, multiplicadores) son una primera propuesta: equilibrar jugando; precios de sobres en Fase 7.
-- Las políticas RLS dejan a los admin LEER filas de todos: el cliente SIEMPRE debe filtrar por user_id.
-- Las cartas DON!! se llaman todas "DON!! Card"; tratar como categoría aparte en el álbum.
-- Imágenes con marca "SAMPLE" (heredada de la fuente).
-- SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12).
-- Keep-alive anti-pausa de Supabase: pendiente. Avisos de Node 20 / ubuntu-latest en Actions: Fase 12.
-
-## Fase 6 — mesa 3D
-- App.jsx -> TableView (HUD HTML + escena lazy). Escena en src/components/table/: Table, CoinStack(+CoinBurst), Card3D, CameraRig, TableScene.
-- Texturas SIN descargas: fieltro y madera procedurales (proceduralTextures.js) y caras de carta dibujadas en canvas (cardTexture.js) = plan B sin imágenes/CORS.
-- Escaparate: las 5 cartas que más producen (3 en pantalla estrecha). Hover/selección = se levantan; clic = detalle + Recoger. Efectos por rareza: halo + chispas (Manga rosa, SP cian, SEC/TR oro, SR plata, Alt violeta).
-- Monedero + pila de monedas (escala logarítmica) + lluvia de monedas al recoger. Contador de monedas animado con GSAP.
-- Rendimiento: dpr 1-1.5, 1 sombra de 1024, sin postprocesado; calidad alta/baja (localStorage) y bajada automática con PerformanceMonitor. Canvas remonta al cambiar calidad.
-- Botones: Tienda(F7)/Álbum(F8)/Mejoras(F9) DESHABILITADOS con su fase; Colección, Catálogo, Calidad, Admin, Salir funcionan.
-- Validado aquí: sintaxis de los 29 archivos, imports/exports y nombres no declarados (tsc). NO renderizado (sin Three.js ni navegador en mi entorno).
-
-## Decisión pendiente para Fase 7
-- Imágenes reales en 3D: requieren proxy CORS (Cloudflare Worker gratuito, cuenta de Cloudflare) o se mantienen las cartas dibujadas. Algunas cartas no tienen imagen en la API: usarán carta dibujada.
+- SQL de Fase 7 y 3D sin probar en mi entorno (sin Postgres, navegador ni red). Validados: sintaxis de todos los .jsx/.js, imports y nombres.
+- Rendimiento: la calidad alta empeoró tras la Fase 6; esta versión elimina cartas, halos grandes y chispas de la mesa.
+- Las políticas RLS dejan a los admin LEER filas de todos: el cliente SIEMPRE filtra por user_id.
+- Card3D.jsx ya no se usa como componente (se importa tipoEfecto): se puede limpiar en Fase 11.
+- Algunas cartas no tienen imagen en la API. Marca "SAMPLE" heredada de la fuente. DON!! = "DON!! Card".
+- SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12). Keep-alive anti-pausa pendiente.
 
 ## Siguiente
-Fase 7: sobres y apertura (catálogo de productos pack_products, precios, generador de sobres en SQL con probabilidades configurables, historial, anti-duplicado, apertura 3D con arrastre, revelado, duplicados).
+Fase 8: Álbum 3D (libro, páginas, filtros por set/rareza, búsqueda, descubiertas/desconocidas, detalle, ordenar, ratón/teclado/táctil) + reclamar producción.

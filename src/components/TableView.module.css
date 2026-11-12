@@ -1,8 +1,3 @@
 .contenedor { position: fixed; inset: 0; background: #0b0f16; overflow: hidden; }
 .escena { position: absolute; inset: 0; }
 .sin3d { height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; opacity: 0.85; }
-.detalle { position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%); z-index: 5; min-width: 240px; max-width: calc(100% - 24px); padding: 10px 14px; background: rgba(15,23,32,0.94); border: 1px solid #e8b04a; border-radius: 12px; display: flex; flex-direction: column; gap: 3px; text-align: center; font-size: 0.85rem; }
-.detalle strong { color: #e8b04a; font-size: 1rem; }
-.filaBotones { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
-.filaBotones button { padding: 7px 14px; border-radius: 8px; border: 1px solid #3d5068; background: #243246; color: inherit; cursor: pointer; }
-.filaBotones button:disabled { opacity: 0.45; cursor: default; }

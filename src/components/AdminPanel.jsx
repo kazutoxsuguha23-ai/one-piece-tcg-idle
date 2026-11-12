@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   adminListUsers, adminGiveCoins, adminSetCoins, adminGivePack, adminResetUser,
-  adminGiveCard, adminSetCardLevel, adminRecalcAll, listProducts,
+  adminGiveCard, adminSetCardLevel, adminRecalcAll, adminSyncProducts, listProducts,
 } from '../services/gameService.js';
 import CardPicker from './CardPicker.jsx';
 import styles from './AdminPanel.module.css';
@@ -112,6 +112,13 @@ export default function AdminPanel({ onClose, onChanged }) {
     if (!window.confirm('¿Recalcular la producción de TODOS los jugadores? Se les paga lo pendiente antes.')) return;
     ejecutar(() => adminRecalcAll(), (n) => `Producción recalculada para ${n} jugadores`, false);
   };
+  const sincronizar = () => {
+    ejecutar(
+      () => adminSyncProducts(),
+      (n) => `Productos nuevos creados: ${n}. Recarga la página para verlos en el desplegable.`,
+      false,
+    );
+  };
   const resetear = () => {
     if (!window.confirm(`¿Seguro que quieres RESETEAR a ${objetivo}? Se borran sus cartas y sobres.`)) return;
     ejecutar(() => adminResetUser(objetivo.trim()), () => `${objetivo} reseteado`);
@@ -205,6 +212,7 @@ export default function AdminPanel({ onClose, onChanged }) {
         <section>
           <h3>Economía</h3>
           <button type="button" disabled={ocupado} onClick={recalcular}>Recalcular producción de todos</button>
+          <button type="button" disabled={ocupado} onClick={sincronizar}>Sincronizar productos con el catálogo</button>
           <p className={styles.nota}>Úsalo después de cambiar la clave "economy" en game_config o de editar niveles a mano.</p>
         </section>
 

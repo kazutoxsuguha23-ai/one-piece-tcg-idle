@@ -12,6 +12,10 @@ const MENSAJES = {
   too_many_copies: 'Demasiadas copias de una misma carta',
   not_authenticated: 'Sesión no válida, vuelve a entrar',
   profile_missing: 'Tu perfil no existe en la base de datos',
+  insufficient_funds: 'No tienes monedas suficientes',
+  no_packs: 'No te quedan sobres de ese tipo',
+  invalid_request: 'Petición no válida, inténtalo de nuevo',
+  empty_pack: 'Ese sobre no tiene cartas disponibles (¿catálogo incompleto?)',
 };
 
 export function traducirError(error) {
@@ -51,3 +55,4 @@ export const adminGiveCard = (usuario, carta, cantidad) =>
 export const adminSetCardLevel = (usuario, carta, nivel) =>
   llamar('admin_set_card_level', { p_username: usuario, p_card_id: carta, p_level: nivel });
 export const adminRecalcAll = () => llamar('admin_recalc_all');
+export const adminSyncProducts = () => llamar('admin_sync_products');

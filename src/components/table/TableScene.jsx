@@ -1,28 +1,31 @@
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import Table from './Table.jsx';
 import CameraRig from './CameraRig.jsx';
 import CoinStack, { CoinBurst } from './CoinStack.jsx';
-import Card3D from './Card3D.jsx';
+import PackPile from './PackPile.jsx';
+import InspectPack from './InspectPack.jsx';
+import RevealStage from './RevealStage.jsx';
 
-// Tus mejores cartas, colocadas en fila sobre la mesa (3 en pantallas estrechas, 5 en anchas).
-function Escaparate({ destacadas, seleccionId, conChispas, onSelect }) {
-  const size = useThree((s) => s.size);
-  const cuantas = size.width / size.height < 0.9 ? 3 : 5;
-  const lista = destacadas.slice(0, cuantas);
+const COLUMNAS = 6;
+const SEPARACION = 1.55;
+const FILAS_Z = [-0.6, 1.75];
+
+// Pilas de sobres sobre la mesa, en 2 filas de hasta 6.
+function Pilas({ pilas, onSelect }) {
   return (
     <group>
-      {lista.map((info, i) => {
-        const centro = i - (lista.length - 1) / 2;
+      {pilas.map((pila, i) => {
+        const fila = Math.floor(i / COLUMNAS);
+        const columna = i % COLUMNAS;
+        const enFila = Math.min(COLUMNAS, pilas.length - fila * COLUMNAS);
         return (
-          <Card3D
-            key={info.card_id}
-            info={info}
-            x={centro * 1.6}
-            z={1.0}
-            giro={centro * -0.04}
-            seleccionada={seleccionId === info.card_id}
-            conChispas={conChispas}
+          <PackPile
+            key={pila.producto.product_id}
+            producto={pila.producto}
+            cantidad={pila.cantidad}
+            x={(columna - (enFila - 1) / 2) * SEPARACION}
+            z={FILAS_Z[fila] ?? FILAS_Z[1]}
             onSelect={onSelect}
           />
         );
@@ -31,21 +34,24 @@ function Escaparate({ destacadas, seleccionId, conChispas, onSelect }) {
   );
 }
 
-export default function TableScene({ calidad, coins, destacadas, seleccionId, burst, onBurstDone, onSelect, onDecline }) {
+export default function TableScene({
+  calidad, coins, modo, pilas, productoActivo, claveSobre, zoom, ordenAbrir, resultado,
+  burst, onBurstDone, onSelectPack, onTear, onAdvance, onDecline,
+}) {
   const alta = calidad === 'alta';
+  const mostrarSobre = productoActivo && (modo === 'inspeccion' || modo === 'abriendo' || modo === 'revelado');
   return (
     <Canvas
       key={calidad}
       shadows={alta}
-      dpr={alta ? [1, 1.5] : 1}
+      dpr={alta ? [1, 1.25] : 1}
       camera={{ fov: 45, position: [0, 5.6, 5.8], near: 0.1, far: 60 }}
       gl={{ antialias: alta, powerPreference: 'high-performance' }}
-      onPointerMissed={() => onSelect(null)}
     >
       <color attach="background" args={['#0b0f16']} />
       <fog attach="fog" args={['#0b0f16', 14, 30]} />
-      <PerformanceMonitor bounds={() => [35, 60]} onDecline={onDecline} />
-      <CameraRig />
+      <PerformanceMonitor bounds={() => [25, 60]} flipflops={1} onDecline={onDecline} />
+      <CameraRig modo={modo} zoom={zoom} />
 
       <ambientLight intensity={0.6} />
       <hemisphereLight args={['#bcd6ff', '#2a1a0a', 0.35]} />
@@ -67,7 +73,20 @@ export default function TableScene({ calidad, coins, destacadas, seleccionId, bu
       <Table />
       <CoinStack coins={coins} />
       {burst && <CoinBurst key={burst.id} onDone={onBurstDone} />}
-      <Escaparate destacadas={destacadas} seleccionId={seleccionId} conChispas={alta} onSelect={onSelect} />
+
+      {modo === 'mesa' && <Pilas pilas={pilas} onSelect={onSelectPack} />}
+      {mostrarSobre && (
+        <InspectPack
+          key={`${productoActivo.product_id}-${claveSobre}`}
+          producto={productoActivo}
+          modo={modo}
+          ordenAbrir={ordenAbrir}
+          onTear={onTear}
+        />
+      )}
+      {modo === 'revelado' && resultado && (
+        <RevealStage cartas={resultado.cartas} indice={resultado.indice} onAvanzar={onAdvance} conEfectos={alta} />
+      )}
     </Canvas>
   );
 }

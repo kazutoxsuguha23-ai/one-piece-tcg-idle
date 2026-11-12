@@ -1,10 +1,12 @@
 import { formatNumber, formatDuration } from '../utils/format.js';
 import styles from './TableHud.module.css';
 
-// Interfaz (HTML) por encima de la mesa 3D: monedero, producción y botones.
+// Interfaz (HTML) por encima de la escena 3D. Cambia según el modo: mesa, inspección, apertura o revelado.
 export default function TableHud({
-  nombre, monedas, produccion, pendiente, capSeg, ocupado, sinCartas, esAdmin, calidad, aviso,
-  onRecogerTodo, onColeccion, onCatalogo, onCalidad, onAdmin, onSalir,
+  modo, nombre, monedas, produccion, pendiente, capSeg, aviso, esAdmin, calidad, sinSobres,
+  pagina, totalPaginas, productoNombre, restantes, cartaActual, indice, total,
+  onTienda, onColeccion, onCatalogo, onCalidad, onAdmin, onSalir,
+  onPagina, onVolver, onZoom, onAbrir, onSaltar,
 }) {
   return (
     <div className={styles.hud}>
@@ -22,24 +24,67 @@ export default function TableHud({
       </div>
 
       {aviso && <div className={styles.aviso}>{aviso}</div>}
-      {sinCartas && (
-        <div className={styles.vacio}>Todavía no tienes cartas. Los sobres llegan en la Fase 7; mientras tanto el admin puede dártelas (F2).</div>
+      {modo === 'mesa' && sinSobres && (
+        <div className={styles.vacio}>No tienes sobres. Abre la Tienda para comprar los primeros.</div>
+      )}
+      {modo === 'inspeccion' && (
+        <div className={styles.titulo3d}>
+          <strong>{productoNombre}</strong>
+          <span>Te quedan {restantes}</span>
+        </div>
+      )}
+      {modo === 'abriendo' && <div className={styles.titulo3d}><strong>Abriendo el sobre...</strong></div>}
+      {modo === 'revelado' && cartaActual && (
+        <div className={styles.titulo3d}>
+          <strong>{cartaActual.info.name}</strong>
+          <span>{cartaActual.info.id} · {cartaActual.info.rarity} · {indice + 1}/{total}</span>
+          <em className={cartaActual.esNueva ? styles.nueva : styles.repetida}>
+            {cartaActual.esNueva ? '¡NUEVA!' : 'REPETIDA +1 copia'}
+          </em>
+        </div>
       )}
 
       <div className={styles.abajo}>
-        <button type="button" className={styles.recoger} disabled={ocupado || sinCartas} onClick={onRecogerTodo}>
-          Recoger todo (+{formatNumber(pendiente)})
-        </button>
-        <div className={styles.botones}>
-          <button type="button" disabled title="Disponible en la Fase 7">Tienda · F7</button>
-          <button type="button" disabled title="Disponible en la Fase 8">Álbum · F8</button>
-          <button type="button" onClick={onColeccion}>Colección</button>
-          <button type="button" disabled title="Disponible en la Fase 9">Mejoras · F9</button>
-          <button type="button" onClick={onCatalogo}>Catálogo</button>
-          <button type="button" onClick={onCalidad}>Calidad: {calidad}</button>
-          {esAdmin && <button type="button" onClick={onAdmin}>Admin (F2)</button>}
-          <button type="button" onClick={onSalir}>Salir</button>
-        </div>
+        {modo === 'mesa' && (
+          <>
+            {totalPaginas > 1 && (
+              <div className={styles.botones}>
+                <button type="button" disabled={pagina === 0} onClick={() => onPagina(-1)}>◀</button>
+                <span className={styles.pagina}>Pág. {pagina + 1}/{totalPaginas}</span>
+                <button type="button" disabled={pagina >= totalPaginas - 1} onClick={() => onPagina(1)}>▶</button>
+              </div>
+            )}
+            <div className={styles.botones}>
+              <button type="button" onClick={onTienda}>Tienda</button>
+              <button type="button" disabled title="Disponible en la Fase 8">Álbum · F8</button>
+              <button type="button" onClick={onColeccion}>Colección</button>
+              <button type="button" disabled title="Disponible en la Fase 9">Mejoras · F9</button>
+              <button type="button" onClick={onCatalogo}>Catálogo</button>
+              <button type="button" onClick={onCalidad}>Calidad: {calidad}</button>
+              {esAdmin && <button type="button" onClick={onAdmin}>Admin (F2)</button>}
+              <button type="button" onClick={onSalir}>Salir</button>
+            </div>
+          </>
+        )}
+        {modo === 'inspeccion' && (
+          <>
+            <p className={styles.pista}>Arrastra para girarlo · Desliza por la parte de arriba hacia un lado para abrirlo · Rueda del ratón = zoom</p>
+            <div className={styles.botones}>
+              <button type="button" onClick={onVolver}>← Volver</button>
+              <button type="button" onClick={() => onZoom(-0.15)}>Zoom −</button>
+              <button type="button" onClick={() => onZoom(0.15)}>Zoom +</button>
+              <button type="button" className={styles.principal} onClick={onAbrir}>Abrir sobre</button>
+            </div>
+          </>
+        )}
+        {modo === 'revelado' && (
+          <>
+            <p className={styles.pista}>Toca la carta para pasar a la siguiente · Arrastra para girarla</p>
+            <div className={styles.botones}>
+              <button type="button" onClick={onSaltar}>Saltar a los resultados</button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -78,8 +78,11 @@ export function useEconomy(jugador) {
   const recogerTodo = useCallback(() => ejecutar(() => collectAll()), [ejecutar]);
   const recogerCarta = useCallback((id) => ejecutar(() => collectCard(id)), [ejecutar]);
 
+  // Para que la tienda y la apertura de sobres actualicen la pantalla con lo que dice el servidor.
+  const aplicarSaldo = useCallback((valor) => setCoins(Number(valor)), []);
+
   return {
     coins, produccion, totalPendiente, filas, capSeg, ocupado, aviso, ultimaRecogida,
-    recogerTodo, recogerCarta,
+    recogerTodo, recogerCarta, aplicarSaldo, recargarCartas: cargarCartas,
   };
 }
