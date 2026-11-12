@@ -9,7 +9,7 @@ const ESCALA = 1.25;
 
 // Sobre en el centro, como un objeto que inspeccionas: arrastra para girarlo; si empiezas
 // arrastrando por la parte de arriba hacia un lado, se rasga y se abre.
-export default function InspectPack({ producto, modo, ordenAbrir, onTear }) {
+export default function InspectPack({ producto, modo, ordenAbrir, retraso = 0, onTear }) {
   const grupo = useRef();
   const estado = useRef({ p: 0, objetivoP: 0, dir: 1, abierto: false, vuelo: 0 });
   const giro = useRef({ x: 0.08, y: -0.4, visX: 0.08, visY: -0.4 });
@@ -26,9 +26,12 @@ export default function InspectPack({ producto, modo, ordenAbrir, onTear }) {
     return () => { vivo = false; };
   }, [producto]);
 
-  // Botón "Abrir sobre" (alternativa al gesto, útil en pantallas táctiles)
+  // Botón "Abrir sobre" / apertura en masa (alternativa al gesto). `retraso` deja ver el sobre un instante
+  // antes de que se rasgue solo.
   useEffect(() => {
-    if (ordenAbrir > 0 && modo === 'inspeccion' && !estado.current.abierto) {
+    if (!(ordenAbrir > 0 && modo === 'inspeccion')) return undefined;
+    const id = setTimeout(() => {
+      if (estado.current.abierto) return;
       estado.current.dir = 1;
       estado.current.objetivoP = 1;
       estado.current.abierto = true;
@@ -36,7 +39,8 @@ export default function InspectPack({ producto, modo, ordenAbrir, onTear }) {
         avisado.current = true;
         onTear();
       }
-    }
+    }, retraso);
+    return () => clearTimeout(id);
   }, [ordenAbrir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame((reloj, delta) => {

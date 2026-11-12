@@ -3,7 +3,7 @@
 ## Fases
 - [x] Fases 1-5 (arquitectura, estructura, BD+auth+admin, catálogo, economía) — verificadas
 - [~] Fase 6 (mesa 3D): REHECHA con el diseño nuevo (sin cartas en la mesa)
-- [~] Fase 7 (sobres y apertura): entregada, pendiente de verificar
+- [~] Fase 7 (sobres y apertura): VERIFICADA por el usuario (SQL, tienda, compra, apertura, rasgado OK). Añadidos: abrir en masa y zoom en resultados (pendiente de verificar)
 - [ ] Fase 8 Álbum 3D (+ reclamar producción) · Fase 9 Mejoras y duplicados · Fases 10-12
 
 ## Diseño de la mesa (decidido por el usuario)
@@ -18,6 +18,15 @@
 - Idempotencia: request_id único por compra/apertura (si se repite, no se duplica).
 - Front: packService, usePacks, packTexture (sobres dibujados), imageLoader (proxy CORS), PackModel/PackPile/InspectPack/RevealStage, ShopPanel, ResultsPanel, TableView (máquina de estados), TableHud.
 - Rendimiento: dpr 1-1.25, 1 sombra de 1024, sin chispas ni sombras en calidad baja, PerformanceMonitor a 25 fps.
+
+## Fase 7b — apertura en masa y resultados
+- "Abrir 1 sobre" y "Abrir todos (N)" (solo si quedan >=2). En lote: al terminar las cartas de un sobre se rasga solo el siguiente (retraso 450 ms); los resultados de todos se juntan en una pantalla final.
+- Botones durante el revelado: "Saltar este sobre" (en lote pasa al siguiente) y "Saltar todos" (abre el resto de golpe, sin animación).
+- Resultados: al pasar el ratón / enfocar / tocar, la carta se levanta y crece (CSS). Si no hay imagen, se muestra la carta dibujada.
+- App.jsx carga TableView bajo demanda (lazy): Three.js ya no pesa en la pantalla de login.
+
+## Pendiente de pulido (realismo del rasgado, estilo Pokémon TCG Pocket)
+- Independiente de las texturas: se puede mejorar en cualquier momento. Ideas: rasgado progresivo a lo largo del gesto (tapa en segmentos que se despegan uno a uno), borde irregular, curvatura del papel, destello de luz y ráfaga de cartas al abrir. Con imagen real hay que ajustar PACK_TAPA a la proporción real del sellado superior. Hacerlo cuando estén las imágenes reales (proxy Cloudflare).
 
 ## Imágenes reales (pendiente, opcional)
 - Requiere crear el proxy gratuito de Cloudflare (cloudflare/image-proxy.js) y pegar su URL en src/imageConfig.js (IMAGE_PROXY_URL).

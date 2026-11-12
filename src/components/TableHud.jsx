@@ -2,11 +2,12 @@ import { formatNumber, formatDuration } from '../utils/format.js';
 import styles from './TableHud.module.css';
 
 // Interfaz (HTML) por encima de la escena 3D. Cambia según el modo: mesa, inspección, apertura o revelado.
+// `lote` = { hechos, total } cuando se están abriendo todos los sobres de un set seguidos.
 export default function TableHud({
   modo, nombre, monedas, produccion, pendiente, capSeg, aviso, esAdmin, calidad, sinSobres,
-  pagina, totalPaginas, productoNombre, restantes, cartaActual, indice, total,
+  pagina, totalPaginas, productoNombre, restantes, cartaActual, indice, total, lote,
   onTienda, onColeccion, onCatalogo, onCalidad, onAdmin, onSalir,
-  onPagina, onVolver, onZoom, onAbrir, onSaltar,
+  onPagina, onVolver, onZoom, onAbrir, onAbrirTodos, onSaltar, onSaltarTodo, onDetener,
 }) {
   return (
     <div className={styles.hud}>
@@ -30,12 +31,18 @@ export default function TableHud({
       {modo === 'inspeccion' && (
         <div className={styles.titulo3d}>
           <strong>{productoNombre}</strong>
-          <span>Te quedan {restantes}</span>
+          <span>{lote ? `Abriendo todos: ${lote.hechos}/${lote.total}` : `Te quedan ${restantes}`}</span>
         </div>
       )}
-      {modo === 'abriendo' && <div className={styles.titulo3d}><strong>Abriendo el sobre...</strong></div>}
+      {modo === 'abriendo' && (
+        <div className={styles.titulo3d}>
+          <strong>{lote && lote.total > 1 ? 'Abriendo sobres...' : 'Abriendo el sobre...'}</strong>
+          {lote && lote.total > 1 && <span>{lote.hechos}/{lote.total}</span>}
+        </div>
+      )}
       {modo === 'revelado' && cartaActual && (
         <div className={styles.titulo3d}>
+          {lote && lote.total > 1 && <span>Sobre {lote.hechos} de {lote.total}</span>}
           <strong>{cartaActual.info.name}</strong>
           <span>{cartaActual.info.id} · {cartaActual.info.rarity} · {indice + 1}/{total}</span>
           <em className={cartaActual.esNueva ? styles.nueva : styles.repetida}>
@@ -66,22 +73,39 @@ export default function TableHud({
             </div>
           </>
         )}
-        {modo === 'inspeccion' && (
+        {modo === 'inspeccion' && !lote && (
           <>
             <p className={styles.pista}>Arrastra para girarlo · Desliza por la parte de arriba hacia un lado para abrirlo · Rueda del ratón = zoom</p>
             <div className={styles.botones}>
               <button type="button" onClick={onVolver}>← Volver</button>
               <button type="button" onClick={() => onZoom(-0.15)}>Zoom −</button>
               <button type="button" onClick={() => onZoom(0.15)}>Zoom +</button>
-              <button type="button" className={styles.principal} onClick={onAbrir}>Abrir sobre</button>
+              <button type="button" className={styles.principal} onClick={onAbrir}>Abrir 1 sobre</button>
+              {restantes > 1 && (
+                <button type="button" className={styles.principal} onClick={onAbrirTodos}>
+                  Abrir todos ({restantes})
+                </button>
+              )}
             </div>
           </>
+        )}
+        {modo === 'inspeccion' && lote && (
+          <div className={styles.botones}>
+            <button type="button" onClick={onDetener}>Detener</button>
+          </div>
         )}
         {modo === 'revelado' && (
           <>
             <p className={styles.pista}>Toca la carta para pasar a la siguiente · Arrastra para girarla</p>
             <div className={styles.botones}>
-              <button type="button" onClick={onSaltar}>Saltar a los resultados</button>
+              {lote && lote.total > 1 ? (
+                <>
+                  <button type="button" onClick={onSaltar}>Saltar este sobre</button>
+                  <button type="button" onClick={onSaltarTodo}>Saltar todos</button>
+                </>
+              ) : (
+                <button type="button" onClick={onSaltar}>Saltar a los resultados</button>
+              )}
             </div>
           </>
         )}

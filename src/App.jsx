@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { isConfigured } from './services/supabaseClient.js';
 import { useAuth } from './hooks/useAuth.js';
 import { useEconomy } from './hooks/useEconomy.js';
 import AuthScreen from './components/AuthScreen.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
-import TableView from './components/TableView.jsx';
 import styles from './App.module.css';
+
+// La mesa 3D (y Three.js con ella) se descarga solo después de iniciar sesión: el login carga más rápido.
+const TableView = lazy(() => import('./components/TableView.jsx'));
 
 // Tecla que abre/cierra el menú de administrador (solo funciona con cuenta admin).
 const TECLA_ADMIN = 'F2';
@@ -48,13 +50,15 @@ export default function App() {
 
   return (
     <>
-      <TableView
-        jugador={jugador}
-        economia={economia}
-        esAdmin={esAdmin}
-        onAdmin={() => setAdminAbierto((abierto) => !abierto)}
-        onSalir={cerrarSesion}
-      />
+      <Suspense fallback={<main className={styles.pantalla}><p className={styles.subtitulo}>Cargando mesa...</p></main>}>
+        <TableView
+          jugador={jugador}
+          economia={economia}
+          esAdmin={esAdmin}
+          onAdmin={() => setAdminAbierto((abierto) => !abierto)}
+          onSalir={cerrarSesion}
+        />
+      </Suspense>
       {esAdmin && adminAbierto && (
         <AdminPanel onClose={() => setAdminAbierto(false)} onChanged={refrescar} />
       )}

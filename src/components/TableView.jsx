@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadCatalog } from '../services/catalogService.js';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber.js';
 import { usePacks } from '../hooks/usePacks.js';
@@ -11,10 +11,11 @@ import ResultsPanel from './ResultsPanel.jsx';
 import SceneBoundary from './SceneBoundary.jsx';
 import styles from './TableView.module.css';
 
-// La escena 3D (Three.js) pesa bastante: se descarga solo cuando ya has iniciado sesión.
+// La escena 3D (R3F, drei) pesa bastante: se descarga solo cuando hace falta.
 const TableScene = lazy(() => import('./table/TableScene.jsx'));
 
 const POR_PAGINA = 12;
+const RETRASO_SIGUIENTE_MS = 450;
 const limitar = (v, a, b) => Math.min(b, Math.max(a, v));
 
 function leerCalidad() {
@@ -33,6 +34,8 @@ function guardarCalidad(valor) {
 }
 
 // Modos: mesa -> inspeccion -> abriendo -> revelado -> resultados -> mesa
+// Con "Abrir todos" hay un `lote`: al terminar las cartas de un sobre se rasga solo el siguiente,
+// y los resultados de todos se juntan en una única pantalla final.
 export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir }) {
   const [calidad, setCalidad] = useState(leerCalidad);
   const [panel, setPanel] = useState(null); // 'tienda' | 'coleccion' | 'catalogo' | null
@@ -43,9 +46,13 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
   const [ordenAbrir, setOrdenAbrir] = useState(0);
   const [claveSobre, setClaveSobre] = useState(0);
   const [resultado, setResultado] = useState(null);
+  const [lote, setLote] = useState(null); // { total, hechos, acumuladas } | null
   const [burst, setBurst] = useState(null);
   const [aviso, setAviso] = useState('');
   const [catalogo, setCatalogo] = useState(null);
+
+  const loteRef = useRef(null);
+  loteRef.current = lote;
 
   const packs = usePacks(jugador);
   const { coins, produccion, totalPendiente, capSeg, ultimaRecogida } = economia;
@@ -76,9 +83,21 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
   const restantes = productoId ? packs.misSobres.find((s) => s.product_id === productoId)?.quantity ?? 0 : 0;
   const cartaActual = resultado ? resultado.cartas[resultado.indice] : null;
 
+  // Convierte la respuesta del servidor en cartas con su información del catálogo.
+  const construirCartas = useCallback(
+    (r) => (r.cards ?? []).map((c) => ({
+      info: catalogo?.byId.get(c.card_id) ?? {
+        id: c.card_id, name: c.card_id, rarity: '?', image: '', type: '', color: null, cost: null, power: null,
+      },
+      esNueva: Boolean(c.is_new),
+    })),
+    [catalogo],
+  );
+
   const seleccionarPila = useCallback((id) => {
     setProductoId(id);
     setAviso('');
+    setLote(null);
     setOrdenAbrir(0);
     setClaveSobre((k) => k + 1);
     setModo('inspeccion');
@@ -87,6 +106,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
   const volver = useCallback(() => {
     setModo('mesa');
     setProductoId(null);
+    setLote(null);
     setAviso('');
   }, []);
 
@@ -95,6 +115,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     if (!productoActivo) return;
     if (!catalogo) {
       setAviso('El catálogo aún no ha cargado, espera un momento.');
+      setLote(null);
       setClaveSobre((k) => k + 1);
       setOrdenAbrir(0);
       return;
@@ -103,48 +124,117 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     setAviso('');
     try {
       const r = await packs.abrir(productoActivo.product_id);
-      const cartas = (r.cards ?? []).map((c) => ({
-        info: catalogo.byId.get(c.card_id) ?? {
-          id: c.card_id, name: c.card_id, rarity: '?', image: '', type: '', color: null, cost: null, power: null,
-        },
-        esNueva: Boolean(c.is_new),
-      }));
-      await economia.recargarCartas();
+      const cartas = construirCartas(r);
+      // Si falla el refresco de la colección no pasa nada: las cartas ya están guardadas en el servidor.
+      await economia.recargarCartas().catch(() => {});
+      setLote((l) => (l ? { ...l, hechos: l.hechos + 1, acumuladas: [...l.acumuladas, ...cartas] } : l));
       setResultado({ cartas, indice: 0 });
       setModo('revelado');
     } catch (e) {
       setAviso(e.message);
-      setClaveSobre((k) => k + 1);
-      setOrdenAbrir(0);
-      setModo('inspeccion');
+      const l = loteRef.current;
+      if (l && l.acumuladas.length > 0) {
+        setResultado(null);
+        setModo('resultados');
+      } else {
+        setLote(null);
+        setClaveSobre((k) => k + 1);
+        setOrdenAbrir(0);
+        setModo('inspeccion');
+      }
     }
-  }, [productoActivo, catalogo, packs, economia]);
+  }, [productoActivo, catalogo, packs, economia, construirCartas]);
+
+  const abrirUno = useCallback(() => {
+    setLote(null);
+    setOrdenAbrir((n) => n + 1);
+  }, []);
+
+  const abrirTodos = useCallback(() => {
+    if (restantes < 1) return;
+    setLote({ total: restantes, hechos: 0, acumuladas: [] });
+    setOrdenAbrir((n) => n + 1);
+  }, [restantes]);
 
   const avanzar = useCallback(() => {
     setResultado((r) => (r ? { ...r, indice: r.indice + 1 } : r));
   }, []);
 
+  // Al terminar de ver las cartas de un sobre: si hay lote, se rasga solo el siguiente; si no, resultados.
   useEffect(() => {
-    if (modo === 'revelado' && resultado && resultado.indice >= resultado.cartas.length) setModo('resultados');
-  }, [modo, resultado]);
+    if (modo !== 'revelado' || !resultado || resultado.indice < resultado.cartas.length) return;
+    if (lote && lote.hechos < lote.total && restantes > 0) {
+      setResultado(null);
+      setClaveSobre((k) => k + 1);
+      setModo('inspeccion'); // `ordenAbrir` sigue activo: el nuevo sobre se rasga solo
+    } else {
+      setModo('resultados');
+    }
+  }, [modo, resultado, lote, restantes]);
+
+  // "Saltar este sobre": termina su revelado (en lote pasa al siguiente; solo, va a resultados).
+  const saltarEste = useCallback(() => {
+    if (loteRef.current && loteRef.current.total > 1) {
+      setResultado((r) => (r ? { ...r, indice: r.cartas.length } : r));
+    } else {
+      setModo('resultados');
+    }
+  }, []);
+
+  // "Saltar todos": abre el resto de sobres del lote de golpe, sin animaciones, y va a los resultados.
+  const saltarTodo = useCallback(async () => {
+    const l = loteRef.current;
+    if (!l || !productoActivo) return;
+    setModo('abriendo');
+    setAviso('');
+    let hechos = l.hechos;
+    let acumuladas = l.acumuladas;
+    try {
+      while (hechos < l.total) {
+        const r = await packs.abrir(productoActivo.product_id);
+        acumuladas = [...acumuladas, ...construirCartas(r)];
+        hechos += 1;
+        setLote((x) => (x ? { ...x, hechos, acumuladas } : x));
+      }
+    } catch (e) {
+      setAviso(e.message);
+    }
+    await economia.recargarCartas().catch(() => {});
+    setResultado(null);
+    setModo('resultados');
+  }, [productoActivo, packs, economia, construirCartas]);
+
+  // Seguridad: detiene la apertura en masa. Si ya se abrió algún sobre, enseña lo conseguido.
+  const detenerLote = useCallback(() => {
+    const l = loteRef.current;
+    if (l && l.acumuladas.length > 0) {
+      setResultado(null);
+      setModo('resultados');
+    } else {
+      volver();
+    }
+  }, [volver]);
 
   useEffect(() => {
-    if (modo !== 'inspeccion' || panel) return undefined;
+    if (modo !== 'inspeccion' || panel || lote) return undefined;
     function alPulsar(e) {
       if (e.key === 'Escape') volver();
     }
     window.addEventListener('keydown', alPulsar);
     return () => window.removeEventListener('keydown', alPulsar);
-  }, [modo, panel, volver]);
+  }, [modo, panel, lote, volver]);
 
   const cerrarResultados = useCallback(() => {
     setResultado(null);
+    setLote(null);
     setProductoId(null);
+    setOrdenAbrir(0);
     setModo('mesa');
   }, []);
 
   const abrirOtro = useCallback(() => {
     setResultado(null);
+    setLote(null);
     setOrdenAbrir(0);
     setClaveSobre((k) => k + 1);
     setModo('inspeccion');
@@ -171,6 +261,9 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     }
   }
 
+  const cartasResultado = lote ? lote.acumuladas : resultado?.cartas ?? [];
+  const sobresAbiertos = lote ? lote.hechos : 1;
+
   return (
     <div
       className={styles.contenedor}
@@ -192,6 +285,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
               claveSobre={claveSobre}
               zoom={zoom}
               ordenAbrir={ordenAbrir}
+              retrasoAbrir={lote && lote.hechos > 0 ? RETRASO_SIGUIENTE_MS : 0}
               resultado={resultado}
               burst={burst}
               onBurstDone={() => setBurst(null)}
@@ -222,6 +316,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
         cartaActual={cartaActual}
         indice={resultado?.indice ?? 0}
         total={resultado?.cartas.length ?? 0}
+        lote={lote}
         onTienda={() => setPanel('tienda')}
         onColeccion={() => setPanel('coleccion')}
         onCatalogo={() => setPanel('catalogo')}
@@ -231,8 +326,11 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
         onPagina={(d) => setPagina(limitar(paginaSegura + d, 0, totalPaginas - 1))}
         onVolver={volver}
         onZoom={(d) => setZoom((z) => limitar(z + d, 0, 1))}
-        onAbrir={() => setOrdenAbrir((n) => n + 1)}
-        onSaltar={() => setModo('resultados')}
+        onAbrir={abrirUno}
+        onAbrirTodos={abrirTodos}
+        onSaltar={saltarEste}
+        onSaltarTodo={saltarTodo}
+        onDetener={detenerLote}
       />
 
       {panel === 'tienda' && (
@@ -256,8 +354,14 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
           <CatalogCheck />
         </ModalPanel>
       )}
-      {modo === 'resultados' && resultado && (
-        <ResultsPanel cartas={resultado.cartas} restantes={restantes} onCerrar={cerrarResultados} onOtro={abrirOtro} />
+      {modo === 'resultados' && cartasResultado.length > 0 && (
+        <ResultsPanel
+          cartas={cartasResultado}
+          sobres={sobresAbiertos}
+          restantes={restantes}
+          onCerrar={cerrarResultados}
+          onOtro={abrirOtro}
+        />
       )}
     </div>
   );

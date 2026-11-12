@@ -35,7 +35,7 @@ function Pilas({ pilas, onSelect }) {
 }
 
 export default function TableScene({
-  calidad, coins, modo, pilas, productoActivo, claveSobre, zoom, ordenAbrir, resultado,
+  calidad, coins, modo, pilas, productoActivo, claveSobre, zoom, ordenAbrir, retrasoAbrir, resultado,
   burst, onBurstDone, onSelectPack, onTear, onAdvance, onDecline,
 }) {
   const alta = calidad === 'alta';
@@ -81,6 +81,7 @@ export default function TableScene({
           producto={productoActivo}
           modo={modo}
           ordenAbrir={ordenAbrir}
+          retraso={retrasoAbrir}
           onTear={onTear}
         />
       )}
