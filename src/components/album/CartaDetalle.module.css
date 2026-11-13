@@ -1,14 +1,15 @@
 .fondo { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.82); display: flex; align-items: center; justify-content: center; padding: 14px; overflow-y: auto; }
 .ventana { width: min(860px, 100%); max-height: 100%; display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; padding: 16px; background: #131c28; border: 1px solid #e8b04a; border-radius: 14px; overflow-y: auto; }
-.escena { flex: 0 0 auto; width: min(300px, 80vw); perspective: 1100px; touch-action: none; cursor: grab; text-align: center; }
-.escena:active { cursor: grabbing; }
-.carta3d { position: relative; width: 100%; aspect-ratio: 5 / 7; transform-style: preserve-3d; }
+/* La zona de la carta no permite seleccionar texto ni arrastrar la imagen */
+.escena { flex: 0 0 auto; width: min(300px, 80vw); perspective: 1100px; text-align: center; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.carta3d { position: relative; width: 100%; aspect-ratio: 5 / 7; transition: transform 0.15s ease-out; outline: none; }
+.pulsable { cursor: zoom-in; }
+.pulsable:focus-visible { outline: 2px solid #e8b04a; outline-offset: 4px; border-radius: 12px; }
+.oculta { visibility: hidden; }
 .conResplandor { filter: drop-shadow(0 0 14px var(--glow)); }
-.frente, .dorso { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+.frente { position: absolute; inset: 0; border-radius: 4.5%; overflow: hidden; isolation: isolate; }
 .frente img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
 .silueta { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; font-weight: 800; color: #7d8aa3; background: repeating-linear-gradient(135deg, #2b3445 0 10px, #252d3c 10px 20px); }
-.brillo { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.38) 50%, transparent 70%); background-size: 250% 100%; mix-blend-mode: overlay; }
-.dorso { transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #e8b04a; font-weight: 800; font-size: 1.4rem; background: repeating-linear-gradient(45deg, #16233a 0 14px, #1a2a45 14px 28px); border: 8px solid #e8b04a; }
 .ayuda { margin: 10px 0 0; font-size: 0.8rem; opacity: 0.65; }
 .datos { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
 .datos h2 { margin: 0; color: #e8b04a; font-size: 1.25rem; }

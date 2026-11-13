@@ -4,7 +4,7 @@
 - [x] Fases 1-5 (arquitectura, estructura, BD+auth+admin, catálogo, economía) — verificadas
 - [~] Fase 6 (mesa 3D): REHECHA con el diseño nuevo (sin cartas en la mesa)
 - [~] Fase 7 (sobres y apertura): VERIFICADA por el usuario (SQL, tienda, compra, apertura, rasgado OK). Añadidos: abrir en masa y zoom en resultados (pendiente de verificar)
-- [~] Fase 8 Álbum 3D (+ reclamar producción): entregada, pendiente de verificar
+- [x] Fase 8 Álbum 3D (+ reclamar producción): VERIFICADA por el usuario. Ajustes 8b (inspección con zoom, sin selección de texto) pendientes de verificar
 - [ ] Fase 9 Mejoras y duplicados · Fases 10-12
 
 ## Diseño de la mesa (decidido por el usuario)
@@ -37,6 +37,8 @@
 - Ficha de carta: se gira en 3D arrastrando (con su imagen real), brillo y resplandor por rareza, datos completos del catálogo, copias/nivel/producción, botón Recoger, anterior/siguiente.
 - Mientras el álbum está abierto el render 3D de la mesa se pausa (frameloop never).
 - Lógica pura probada en albumUtils.js (paginación sin páginas perdidas/repetidas hasta 120, filtros, orden, búsqueda).
+- Fase 8b: la ficha (info + carta al lado) se inclina y brilla con el ratón; al pulsar la carta se AGRANDA con animación (FLIP) a pantalla grande: giro por arrastre con inercia, brillo holográfico + destello que siguen al puntero (más intensos en SR/SEC/TR/SP/Manga/Alt), zoom con rueda/botones/+/-, "Reencuadrar", dorso visible, volver con Esc o pulsando fuera. Esc cierra la inspección y NO la ficha.
+- Bug corregido: al arrastrar se seleccionaba texto (azul) -> user-select:none en la zona de la carta y la inspección.
 - Fase 9 añadirá en la ficha: subir nivel y vender duplicados.
 
 ## Imágenes reales en WebGL (pendiente, opcional)

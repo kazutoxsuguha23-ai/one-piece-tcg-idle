@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import CardImage from '../CardImage.jsx';
+import BrilloCarta from './BrilloCarta.jsx';
+import CartaInspeccion from './CartaInspeccion.jsx';
 import { formatNumber } from '../../utils/format.js';
 import { colorRareza, etiquetaVariante } from '../../utils/rarityStyle.js';
 import styles from './CartaDetalle.module.css';
-
-const limitar = (v, a, b) => Math.min(b, Math.max(a, v));
 
 function Fila({ etiqueta, valor }) {
   if (valor === null || valor === undefined || valor === '') return null;
@@ -16,20 +16,27 @@ function Fila({ etiqueta, valor }) {
   );
 }
 
-// Ficha de una carta: se puede girar en 3D arrastrando (con su imagen real) y recoger lo que ha generado.
+const REPOSO = { x: 0, y: 0, mx: 50, my: 30 };
+
+// Ficha de una carta: datos a un lado y la carta al otro. Al pasar el ratón se inclina y brilla;
+// al pulsarla se agranda para inspeccionarla (girarla, verle los brillos...).
 export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext, onRecoger, ocupado }) {
   const { info, poseida } = item;
-  const [rot, setRot] = useState({ x: 0, y: 0 });
-  const [suave, setSuave] = useState(false);
-  const arrastre = useRef(null);
+  const [inclinacion, setInclinacion] = useState(REPOSO);
+  const [inspeccion, setInspeccion] = useState(null); // { rect } | null
+  const cartaRef = useRef(null);
+  const inspeccionRef = useRef(null);
+  inspeccionRef.current = inspeccion;
   const color = colorRareza(info);
 
   useEffect(() => {
-    setRot({ x: 0, y: 0 });
+    setInclinacion(REPOSO);
+    setInspeccion(null);
   }, [info.id]);
 
   useEffect(() => {
     function alPulsar(e) {
+      if (inspeccionRef.current) return; // con la inspección abierta, las teclas son de la inspección
       if (e.key === 'Escape') onClose();
       else if (e.key === 'ArrowLeft') onPrev();
       else if (e.key === 'ArrowRight') onNext();
@@ -38,58 +45,41 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
     return () => window.removeEventListener('keydown', alPulsar);
   }, [onClose, onPrev, onNext]);
 
-  function alPresionar(e) {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    arrastre.current = { x: e.clientX, y: e.clientY, rx: rot.x, ry: rot.y };
-    setSuave(false);
-  }
   function alMover(e) {
-    const a = arrastre.current;
-    if (!a) return;
-    setRot({
-      x: limitar(a.rx - (e.clientY - a.y) * 0.4, -70, 70),
-      y: a.ry + (e.clientX - a.x) * 0.5,
-    });
-  }
-  function alSoltar() {
-    arrastre.current = null;
-  }
-  function reencuadrar() {
-    setSuave(true);
-    // Vuelve a la cara frontal por el camino más corto
-    setRot((r) => ({ x: 0, y: Math.round(r.y / 360) * 360 }));
+    const r = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    setInclinacion({ x: (0.5 - py) * 16, y: (px - 0.5) * 20, mx: px * 100, my: py * 100 });
   }
 
-  const brillo = 50 + Math.sin((rot.y * Math.PI) / 180) * 60;
+  function inspeccionar() {
+    if (!poseida || !cartaRef.current) return;
+    setInspeccion({ rect: cartaRef.current.getBoundingClientRect() });
+  }
 
   return (
     <div className={styles.fondo} role="dialog" aria-label={`Carta ${info.id}`} onClick={onClose}>
       <div className={styles.ventana} onClick={(e) => e.stopPropagation()}>
-        <div
-          className={styles.escena}
-          onPointerDown={alPresionar}
-          onPointerMove={alMover}
-          onPointerUp={alSoltar}
-          onPointerCancel={alSoltar}
-        >
+        <div className={styles.escena} onPointerMove={alMover} onPointerLeave={() => setInclinacion(REPOSO)}>
           <div
-            className={`${styles.carta3d} ${color ? styles.conResplandor : ''}`}
+            ref={cartaRef}
+            className={`${styles.carta3d} ${color ? styles.conResplandor : ''} ${poseida ? styles.pulsable : ''} ${inspeccion ? styles.oculta : ''}`}
+            role={poseida ? 'button' : undefined}
+            tabIndex={poseida ? 0 : undefined}
+            aria-label={poseida ? 'Inspeccionar la carta en grande' : undefined}
+            onClick={inspeccionar}
+            onKeyDown={(e) => { if (e.key === 'Enter') inspeccionar(); }}
             style={{
-              transform: `rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,
-              transition: suave ? 'transform 0.5s ease' : 'none',
+              transform: `rotateX(${inclinacion.x}deg) rotateY(${inclinacion.y}deg)`,
               '--glow': color ?? 'transparent',
             }}
           >
             <div className={styles.frente}>
               {poseida ? <CardImage info={info} /> : <div className={styles.silueta}>?</div>}
-              <div className={styles.brillo} style={{ backgroundPosition: `${brillo}% 0` }} />
-            </div>
-            <div className={styles.dorso}>
-              <span>ONE PIECE</span>
-              <span>TCG IDLE</span>
+              {poseida && <BrilloCarta info={info} mx={inclinacion.mx} my={inclinacion.my} />}
             </div>
           </div>
-          <p className={styles.ayuda}>Arrastra para girar la carta</p>
+          {poseida && <p className={styles.ayuda}>Pulsa la carta para inspeccionarla en grande</p>}
         </div>
 
         <div className={styles.datos}>
@@ -122,6 +112,9 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
 
           <div className={styles.botones}>
             {poseida && (
+              <button type="button" onClick={inspeccionar}>Inspeccionar</button>
+            )}
+            {poseida && (
               <button
                 type="button"
                 className={styles.principal}
@@ -131,13 +124,16 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
                 Recoger (+{formatNumber(poseida.pendiente)})
               </button>
             )}
-            <button type="button" onClick={reencuadrar}>Reencuadrar</button>
             <button type="button" onClick={onPrev}>◀ Anterior</button>
             <button type="button" onClick={onNext}>Siguiente ▶</button>
             <button type="button" onClick={onClose}>Cerrar</button>
           </div>
         </div>
       </div>
+
+      {inspeccion && (
+        <CartaInspeccion info={info} origen={inspeccion.rect} onClose={() => setInspeccion(null)} />
+      )}
     </div>
   );
 }

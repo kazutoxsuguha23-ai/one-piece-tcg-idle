@@ -1,0 +1,2 @@
+.holo { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, #ff2d95 0%, #ff9d00 18%, #fff200 34%, #27ff8d 50%, #00cfff 66%, #8a5cff 82%, #ff2d95 100%); background-size: 320% 320%; background-position: var(--bx) var(--by); mix-blend-mode: color-dodge; opacity: var(--op); }
+.destello { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.18) 28%, rgba(255, 255, 255, 0) 55%); mix-blend-mode: soft-light; }
