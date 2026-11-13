@@ -1,17 +1,6 @@
-import { useMemo, useState } from 'react';
 import ModalPanel from './ModalPanel.jsx';
-import { getCardFaceTexture } from '../utils/cardTexture.js';
+import CardImage from './CardImage.jsx';
 import styles from './ResultsPanel.module.css';
-
-// Imagen de la carta; si no existe o falla, se enseña la carta dibujada por código.
-function Cara({ info }) {
-  const [fallo, setFallo] = useState(!info.image);
-  const src = useMemo(
-    () => (fallo ? getCardFaceTexture(info).image.toDataURL('image/png') : info.image),
-    [fallo, info],
-  );
-  return <img src={src} alt={info.name} loading="lazy" onError={() => setFallo(true)} />;
-}
 
 // Resumen al terminar de revelar: cartas nuevas y repetidas. Al pasar el ratón (o al tocar / tabular)
 // cada carta se levanta y se ve en grande.
@@ -27,7 +16,7 @@ export default function ResultsPanel({ cartas, sobres, restantes, onCerrar, onOt
           {cartas.map((c, i) => (
             <figure key={`${c.info.id}-${i}`} className={styles.carta} tabIndex={0}>
               <div className={styles.marco}>
-                <Cara info={c.info} />
+                <CardImage info={c.info} />
               </div>
               <figcaption>
                 <span>{c.info.name}</span>

@@ -1,0 +1,20 @@
+.fondo { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 10px 6px; background: radial-gradient(ellipse at center, #3a2a1a 0%, #1a1109 60%, #0a0705 100%); overflow: hidden; }
+.cargando { margin: auto; }
+.barra { width: min(1100px, 100%); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
+.barra select, .barra input { padding: 8px 10px; border-radius: 8px; border: 1px solid #5a4630; background: #2a1e12; color: inherit; font-size: 0.85rem; max-width: 100%; }
+.barra input { min-width: 150px; }
+.volver, .pie button, .reclamar button { padding: 8px 12px; border-radius: 8px; border: 1px solid #5a4630; background: #3a2a1a; color: inherit; cursor: pointer; font-size: 0.85rem; }
+.volver:hover, .pie button:hover:not(:disabled) { border-color: #e8b04a; }
+.pie button:disabled, .reclamar button:disabled { opacity: 0.4; cursor: default; }
+.info { width: min(1100px, 100%); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; font-size: 0.85rem; }
+.info strong { color: #e8b04a; }
+.reclamar { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+.reclamar button { background: #e8b04a; color: #1a1205; font-weight: 800; border-color: #e8b04a; }
+.reclamar button:disabled { background: #3a2a1a; color: inherit; border-color: #5a4630; }
+.flota { position: absolute; right: 0; top: -4px; color: #7ee08a; font-style: normal; font-weight: 800; animation: sube 1.6s ease-out forwards; pointer-events: none; }
+@keyframes sube { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-26px); } }
+.zonaLibro { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+.vacio { padding: 20px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; }
+.pie { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+.ir input { width: 92px; padding: 7px 8px; border-radius: 8px; border: 1px solid #5a4630; background: #2a1e12; color: inherit; font-size: 0.8rem; }
+.ayuda { margin: 0; font-size: 0.72rem; opacity: 0.55; text-align: center; }

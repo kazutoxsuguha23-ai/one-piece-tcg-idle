@@ -4,7 +4,8 @@
 - [x] Fases 1-5 (arquitectura, estructura, BD+auth+admin, catálogo, economía) — verificadas
 - [~] Fase 6 (mesa 3D): REHECHA con el diseño nuevo (sin cartas en la mesa)
 - [~] Fase 7 (sobres y apertura): VERIFICADA por el usuario (SQL, tienda, compra, apertura, rasgado OK). Añadidos: abrir en masa y zoom en resultados (pendiente de verificar)
-- [ ] Fase 8 Álbum 3D (+ reclamar producción) · Fase 9 Mejoras y duplicados · Fases 10-12
+- [~] Fase 8 Álbum 3D (+ reclamar producción): entregada, pendiente de verificar
+- [ ] Fase 9 Mejoras y duplicados · Fases 10-12
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
@@ -28,7 +29,17 @@
 ## Pendiente de pulido (realismo del rasgado, estilo Pokémon TCG Pocket)
 - Independiente de las texturas: se puede mejorar en cualquier momento. Ideas: rasgado progresivo a lo largo del gesto (tapa en segmentos que se despegan uno a uno), borde irregular, curvatura del papel, destello de luz y ráfaga de cartas al abrir. Con imagen real hay que ajustar PACK_TAPA a la proporción real del sellado superior. Hacerlo cuando estén las imágenes reales (proxy Cloudflare).
 
-## Imágenes reales (pendiente, opcional)
+## Fase 8 — álbum
+- Libro 3D con transformaciones CSS (NO WebGL): portada que se abre, hojas que giran con perspectiva, 2 páginas (1 en móvil, con deslizamiento). Por eso las IMÁGENES REALES de las cartas ya se ven en el álbum sin proxy de Cloudflare (<img> normal, sin CORS). Cartas sin imagen: carta dibujada (CardImage).
+- Un set por libro (desplegable agrupado por tipo, con descubiertas/total). Filtros: rareza o variante (Alt/Manga/SP), estado (todas/descubiertas/sin descubrir), orden (set, rareza, producción, nivel, copias, nombre), búsqueda. Las cartas sin descubrir NO revelan su nombre (la búsqueda por nombre solo encuentra descubiertas; por código encuentra todas).
+- 9 cartas por página (3x3). Cada casilla: nombre, copias, nivel, producción/s y botón de monedas acumuladas (reclamar por carta). Cabecera: "Recoger todo".
+- Navegación: botones, zonas laterales, flechas/RePág/AvPág/Inicio/Fin, deslizar, "Ir a pág.".
+- Ficha de carta: se gira en 3D arrastrando (con su imagen real), brillo y resplandor por rareza, datos completos del catálogo, copias/nivel/producción, botón Recoger, anterior/siguiente.
+- Mientras el álbum está abierto el render 3D de la mesa se pausa (frameloop never).
+- Lógica pura probada en albumUtils.js (paginación sin páginas perdidas/repetidas hasta 120, filtros, orden, búsqueda).
+- Fase 9 añadirá en la ficha: subir nivel y vender duplicados.
+
+## Imágenes reales en WebGL (pendiente, opcional)
 - Requiere crear el proxy gratuito de Cloudflare (cloudflare/image-proxy.js) y pegar su URL en src/imageConfig.js (IMAGE_PROXY_URL).
 - Sin proxy: cartas y sobres se dibujan por código (funciona igual).
 - Sobres: config.art_url de los OPxx apunta a images.scrydex.com/onepiece/OPxx-s1/large (NO verificado). Si falla, se usa el sobre dibujado. Se puede editar art_url en pack_products.config.
@@ -48,4 +59,4 @@
 - SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12). Keep-alive anti-pausa pendiente.
 
 ## Siguiente
-Fase 8: Álbum 3D (libro, páginas, filtros por set/rareza, búsqueda, descubiertas/desconocidas, detalle, ordenar, ratón/teclado/táctil) + reclamar producción.
+Fase 9: Mejoras y duplicados (vender duplicados protegiendo la primera copia, subir nivel 1-100 consumiendo copias de la MISMA carta exacta, costes progresivos, confirmaciones, atómico en SQL).

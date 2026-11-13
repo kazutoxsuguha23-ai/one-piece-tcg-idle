@@ -8,6 +8,7 @@ import EconomyPanel from './EconomyPanel.jsx';
 import CatalogCheck from './CatalogCheck.jsx';
 import ShopPanel from './ShopPanel.jsx';
 import ResultsPanel from './ResultsPanel.jsx';
+import AlbumView from './album/AlbumView.jsx';
 import SceneBoundary from './SceneBoundary.jsx';
 import styles from './TableView.module.css';
 
@@ -39,6 +40,7 @@ function guardarCalidad(valor) {
 export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir }) {
   const [calidad, setCalidad] = useState(leerCalidad);
   const [panel, setPanel] = useState(null); // 'tienda' | 'coleccion' | 'catalogo' | null
+  const [albumAbierto, setAlbumAbierto] = useState(false);
   const [modo, setModo] = useState('mesa');
   const [productoId, setProductoId] = useState(null);
   const [pagina, setPagina] = useState(0);
@@ -293,6 +295,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
               onTear={abrirSobre}
               onAdvance={avanzar}
               onDecline={bajarCalidadAuto}
+              pausada={albumAbierto}
             />
           </Suspense>
         </SceneBoundary>
@@ -318,6 +321,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
         total={resultado?.cartas.length ?? 0}
         lote={lote}
         onTienda={() => setPanel('tienda')}
+        onAlbum={() => setAlbumAbierto(true)}
         onColeccion={() => setPanel('coleccion')}
         onCatalogo={() => setPanel('catalogo')}
         onCalidad={cambiarCalidad}
@@ -332,6 +336,10 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
         onSaltarTodo={saltarTodo}
         onDetener={detenerLote}
       />
+
+      {albumAbierto && (
+        <AlbumView catalogo={catalogo} economia={economia} onCerrar={() => setAlbumAbierto(false)} />
+      )}
 
       {panel === 'tienda' && (
         <ModalPanel titulo="Tienda de sobres" onClose={() => setPanel(null)}>

@@ -1,0 +1,17 @@
+.pagina { position: absolute; inset: 0; background: linear-gradient(180deg, #f3ead6, #e9dfc6); }
+.guarda { position: absolute; inset: 0; background: repeating-linear-gradient(45deg, #d9ccb0 0 10px, #d2c4a6 10px 20px); }
+.rejilla { position: absolute; inset: 5% 9% 8%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2.5% 3%; }
+.casilla { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.vacia { background: rgba(0, 0, 0, 0.04); border-radius: 6px; }
+.carta { flex: 1; min-height: 0; display: flex; padding: 2px; background: #d3c7ab; border: 2px solid var(--color, #b9ab8c); border-radius: 6px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.carta:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4); z-index: 2; }
+.carta img { width: 100%; height: 100%; object-fit: contain; border-radius: 3px; }
+.desconocida { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(135deg, #2b3445 0 8px, #252d3c 8px 16px); border: 2px dashed #4a566b; border-radius: 6px; color: #7d8aa3; font-size: clamp(1.2rem, 3.4vh, 2.4rem); font-weight: 800; cursor: pointer; }
+.desconocida:hover { border-color: #e8b04a; color: #e8b04a; }
+.moneda { position: absolute; top: 4px; right: 4px; z-index: 3; padding: 1px 6px; background: #e8b04a; color: #1a1205; border: 0; border-radius: 10px; font-weight: 800; font-size: clamp(8px, 1.15vh, 11px); cursor: pointer; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); animation: latido 1.4s ease-in-out infinite alternate; }
+.moneda:disabled { opacity: 0.5; animation: none; }
+@keyframes latido { from { transform: scale(1); } to { transform: scale(1.12); } }
+.pie { display: flex; flex-direction: column; align-items: center; margin-top: 2px; color: #3a2c18; line-height: 1.15; text-align: center; min-width: 0; }
+.nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: clamp(8px, 1.2vh, 12px); }
+.pie small { font-size: clamp(7px, 1vh, 10px); opacity: 0.8; white-space: nowrap; }
+.numero { position: absolute; bottom: 2.2%; left: 0; right: 0; text-align: center; font-size: 0.75rem; color: #6a5a3c; }

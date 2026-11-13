@@ -36,13 +36,14 @@ function Pilas({ pilas, onSelect }) {
 
 export default function TableScene({
   calidad, coins, modo, pilas, productoActivo, claveSobre, zoom, ordenAbrir, retrasoAbrir, resultado,
-  burst, onBurstDone, onSelectPack, onTear, onAdvance, onDecline,
+  burst, onBurstDone, onSelectPack, onTear, onAdvance, onDecline, pausada,
 }) {
   const alta = calidad === 'alta';
   const mostrarSobre = productoActivo && (modo === 'inspeccion' || modo === 'abriendo' || modo === 'revelado');
   return (
     <Canvas
       key={calidad}
+      frameloop={pausada ? 'never' : 'always'}
       shadows={alta}
       dpr={alta ? [1, 1.25] : 1}
       camera={{ fov: 45, position: [0, 5.6, 5.8], near: 0.1, far: 60 }}
