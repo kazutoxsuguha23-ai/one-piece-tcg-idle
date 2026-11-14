@@ -1,0 +1,4 @@
+.caja { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.armado { background: #b3392f !important; border-color: #d65a4f !important; color: #fff !important; animation: aviso 0.8s ease-in-out infinite alternate; }
+@keyframes aviso { from { box-shadow: 0 0 0 0 rgba(214, 90, 79, 0.7); } to { box-shadow: 0 0 0 6px rgba(214, 90, 79, 0); } }
+.resumen { font-size: 0.78rem; opacity: 0.9; }

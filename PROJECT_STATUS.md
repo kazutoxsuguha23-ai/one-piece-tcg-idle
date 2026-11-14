@@ -4,8 +4,9 @@
 - [x] Fases 1-5 (arquitectura, estructura, BD+auth+admin, catálogo, economía) — verificadas
 - [~] Fase 6 (mesa 3D): REHECHA con el diseño nuevo (sin cartas en la mesa)
 - [~] Fase 7 (sobres y apertura): VERIFICADA por el usuario (SQL, tienda, compra, apertura, rasgado OK). Añadidos: abrir en masa y zoom en resultados (pendiente de verificar)
-- [x] Fase 8 Álbum 3D (+ reclamar producción): VERIFICADA por el usuario. Ajustes 8b (inspección con zoom, sin selección de texto) pendientes de verificar
-- [ ] Fase 9 Mejoras y duplicados · Fases 10-12
+- [x] Fase 8 Álbum 3D (+ inspección con zoom): VERIFICADA por el usuario
+- [~] Fase 9 Mejoras y duplicados: entregada, pendiente de verificar
+- [ ] Fases 10-12 (seguridad y pruebas, optimización, publicación)
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
@@ -41,6 +42,15 @@
 - Bug corregido: al arrastrar se seleccionaba texto (azul) -> user-select:none en la zona de la carta y la inspección.
 - Fase 9 añadirá en la ficha: subir nivel y vender duplicados.
 
+## Fase 9 — mejoras y duplicados (SQL 0004_mejoras.sql)
+- Config en game_config clave "upgrades" (editable): card_level, sell, global.
+- SUBIR NIVEL (1->100): cada nivel gasta copias REPETIDAS de la MISMA carta exacta + monedas. Copias por tramo de nivel: 1 (1-9), 2 (10-24), 3 (25-49), 5 (50-74), 8 (75-99), con multiplicador por rareza (SR x0.5, SEC/TR x0.25) y variante (alt/sp x0.5, manga x0.25), mínimo 1. Monedas = producción nivel 1 de la carta x 600 s x 1.07^(nivel-1). La PRIMERA COPIA está protegida (solo se gastan copias-1).
+- VENDER: cada copia repetida paga 300 s de producción (nivel 1) de esa carta, mínimo 1. Una carta o en masa por rarezas (por defecto C y UC; arte alternativo/Manga/SP solo si se marca). La venta en masa tiene vista previa y exige que las monedas confirmadas coincidan con las vistas.
+- MEJORAS GLOBALES: "Maestría del tesoro" (+10% producción por nivel, 50 niveles, coste 5000 x 1.35^n) y "Almacén ampliado" (+1 h por nivel, 24 niveles, coste 3000 x 1.3^n). Guardan niveles en player_progress.upgrades.levels y escriben prod_mult / storage_bonus_seconds (los que ya lee la economía).
+- Atomicidad y anti-duplicado: todo en una transacción con bloqueo del jugador; p_from_level / p_expected_copies / p_expected_level / p_expected_coins rechazan dobles envíos y reintentos sin cobrar. Antes de cambiar el ritmo de producción se cobra lo acumulado (settle_player).
+- Front: MejorarCarta (en la ficha del álbum), BotonConfirmar (confirmación de 2 pasos), EfectoNivel (destello + chispas + "¡NIVEL N!" + brillo de la carta), MejorasPanel (botón Mejoras de la mesa), upgradeService. Los números salen SIEMPRE del servidor.
+- Equilibrio (carta Rara, 1.5/s): amortización de un nivel ~1 h (nivel 1), ~11 h (50), ~31 h (75); llegar al 100 cuesta ~1e7 monedas. Es una propuesta: ajustar jugando.
+
 ## Imágenes reales en WebGL (pendiente, opcional)
 - Requiere crear el proxy gratuito de Cloudflare (cloudflare/image-proxy.js) y pegar su URL en src/imageConfig.js (IMAGE_PROXY_URL).
 - Sin proxy: cartas y sobres se dibujan por código (funciona igual).
@@ -61,4 +71,4 @@
 - SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12). Keep-alive anti-pausa pendiente.
 
 ## Siguiente
-Fase 9: Mejoras y duplicados (vender duplicados protegiendo la primera copia, subir nivel 1-100 consumiendo copias de la MISMA carta exacta, costes progresivos, confirmaciones, atómico en SQL).
+Fase 10: Seguridad y pruebas (revisar RLS y funciones, límites de frecuencia, validaciones, pruebas de integridad de la economía, anti-abuso).

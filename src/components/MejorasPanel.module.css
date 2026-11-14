@@ -1,0 +1,23 @@
+.panel { width: 100%; display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.panel h3 { margin: 0 0 6px; color: #e8b04a; font-size: 1rem; }
+.saldo { margin: 0; font-size: 1.05rem; }
+.saldo strong { color: #ffcf4a; }
+.ok { margin: 0; padding: 8px 10px; background: #1f5f3a; border-radius: 8px; }
+.error { margin: 0; padding: 8px 10px; background: #7a2630; border-radius: 8px; }
+.nota { margin: 0 0 6px; font-size: 0.8rem; opacity: 0.7; }
+.lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mejora { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; background: #1a2430; border: 1px solid #2a3a4e; border-radius: 10px; }
+.texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 0.85rem; }
+.texto small { opacity: 0.75; }
+.maximo { padding: 6px 10px; border: 1px solid #e8b04a; border-radius: 8px; color: #e8b04a; font-weight: 800; }
+.panel button { padding: 9px 12px; border-radius: 8px; border: 1px solid #3d5068; background: #243246; color: inherit; cursor: pointer; font-size: 0.85rem; }
+.mejora button { background: #e8b04a; color: #1a1205; border-color: #e8b04a; font-weight: 800; white-space: nowrap; }
+.panel button:disabled { opacity: 0.45; cursor: default; }
+.rarezas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.rarezas label { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border: 1px solid #3d5068; border-radius: 16px; cursor: pointer; font-size: 0.82rem; user-select: none; }
+.rarezas input { display: none; }
+.activa { background: #e8b04a; color: #1a1205; border-color: #e8b04a !important; font-weight: 800; }
+.variantes { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 0.82rem; }
+.preview { margin-top: 10px; padding: 10px; background: #0f1720; border: 1px solid #2a3a4e; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+.preview p { margin: 0; }
+.vender { background: #7a3a2f !important; border-color: #a35547 !important; }

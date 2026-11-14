@@ -57,6 +57,7 @@ export default function App() {
           esAdmin={esAdmin}
           onAdmin={() => setAdminAbierto((abierto) => !abierto)}
           onSalir={cerrarSesion}
+          onRefrescar={refrescar}
         />
       </Suspense>
       {esAdmin && adminAbierto && (

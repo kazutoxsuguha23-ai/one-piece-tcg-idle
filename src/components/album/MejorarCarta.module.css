@@ -1,0 +1,18 @@
+.caja { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding: 10px; background: #0f1720; border: 1px solid #2a3a4e; border-radius: 10px; font-size: 0.85rem; }
+.caja h3 { margin: 6px 0 0; color: #e8b04a; font-size: 0.95rem; }
+.caja h3:first-child { margin-top: 0; }
+.nivel { display: flex; flex-direction: column; gap: 4px; }
+.barra { height: 8px; background: #243246; border-radius: 6px; overflow: hidden; }
+.barra div { height: 100%; background: linear-gradient(90deg, #e8b04a, #ffd24a); transition: width 0.5s ease; }
+.linea { margin: 0; }
+.sube { color: #7ee08a; }
+.nota { margin: 0; opacity: 0.7; font-size: 0.8rem; }
+.botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.caja button { padding: 8px 12px; border-radius: 8px; border: 1px solid #3d5068; background: #243246; color: inherit; cursor: pointer; font-size: 0.85rem; }
+.caja button:disabled { opacity: 0.45; cursor: default; }
+.caja .principal { background: #e8b04a; color: #1a1205; border-color: #e8b04a; font-weight: 800; }
+.caja .vender { background: #7a3a2f; border-color: #a35547; }
+.cantidad { display: flex; gap: 6px; align-items: center; }
+.cantidad input { width: 64px; padding: 7px; border-radius: 8px; border: 1px solid #3d5068; background: #131c28; color: inherit; text-align: center; font-size: 0.9rem; }
+.ok { margin: 0; padding: 6px 8px; background: #1f5f3a; border-radius: 8px; }
+.error { margin: 0; padding: 6px 8px; background: #7a2630; border-radius: 8px; }

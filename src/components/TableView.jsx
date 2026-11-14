@@ -8,6 +8,7 @@ import EconomyPanel from './EconomyPanel.jsx';
 import CatalogCheck from './CatalogCheck.jsx';
 import ShopPanel from './ShopPanel.jsx';
 import ResultsPanel from './ResultsPanel.jsx';
+import MejorasPanel from './MejorasPanel.jsx';
 import AlbumView from './album/AlbumView.jsx';
 import SceneBoundary from './SceneBoundary.jsx';
 import styles from './TableView.module.css';
@@ -37,9 +38,9 @@ function guardarCalidad(valor) {
 // Modos: mesa -> inspeccion -> abriendo -> revelado -> resultados -> mesa
 // Con "Abrir todos" hay un `lote`: al terminar las cartas de un sobre se rasga solo el siguiente,
 // y los resultados de todos se juntan en una única pantalla final.
-export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir }) {
+export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir, onRefrescar }) {
   const [calidad, setCalidad] = useState(leerCalidad);
-  const [panel, setPanel] = useState(null); // 'tienda' | 'coleccion' | 'catalogo' | null
+  const [panel, setPanel] = useState(null); // 'tienda' | 'coleccion' | 'mejoras' | 'catalogo' | null
   const [albumAbierto, setAlbumAbierto] = useState(false);
   const [modo, setModo] = useState('mesa');
   const [productoId, setProductoId] = useState(null);
@@ -323,6 +324,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
         onTienda={() => setPanel('tienda')}
         onAlbum={() => setAlbumAbierto(true)}
         onColeccion={() => setPanel('coleccion')}
+        onMejoras={() => setPanel('mejoras')}
         onCatalogo={() => setPanel('catalogo')}
         onCalidad={cambiarCalidad}
         onAdmin={onAdmin}
@@ -355,6 +357,11 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
       {panel === 'coleccion' && (
         <ModalPanel titulo="Colección" onClose={() => setPanel(null)}>
           <EconomyPanel economia={economia} />
+        </ModalPanel>
+      )}
+      {panel === 'mejoras' && (
+        <ModalPanel titulo="Mejoras" onClose={() => setPanel(null)}>
+          <MejorasPanel coins={coins} economia={economia} onRefrescar={onRefrescar} />
         </ModalPanel>
       )}
       {panel === 'catalogo' && (

@@ -16,6 +16,11 @@ const MENSAJES = {
   no_packs: 'No te quedan sobres de ese tipo',
   invalid_request: 'Petición no válida, inténtalo de nuevo',
   empty_pack: 'Ese sobre no tiene cartas disponibles (¿catálogo incompleto?)',
+  state_changed: 'Tus datos han cambiado desde que lo viste. No se ha cobrado nada: inténtalo de nuevo.',
+  max_level: 'Ya está al nivel máximo',
+  insufficient_copies: 'No tienes suficientes copias repetidas (la primera copia no cuenta)',
+  no_duplicates: 'No tienes copias repetidas que vender (la primera copia está protegida)',
+  upgrade_not_found: 'Esa mejora no existe',
 };
 
 export function traducirError(error) {

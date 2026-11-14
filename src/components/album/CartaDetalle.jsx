@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import CardImage from '../CardImage.jsx';
 import BrilloCarta from './BrilloCarta.jsx';
 import CartaInspeccion from './CartaInspeccion.jsx';
+import MejorarCarta from './MejorarCarta.jsx';
+import EfectoNivel from './EfectoNivel.jsx';
 import { formatNumber } from '../../utils/format.js';
 import { colorRareza, etiquetaVariante } from '../../utils/rarityStyle.js';
 import styles from './CartaDetalle.module.css';
@@ -20,10 +22,11 @@ const REPOSO = { x: 0, y: 0, mx: 50, my: 30 };
 
 // Ficha de una carta: datos a un lado y la carta al otro. Al pasar el ratón se inclina y brilla;
 // al pulsarla se agranda para inspeccionarla (girarla, verle los brillos...).
-export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext, onRecoger, ocupado }) {
+export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext, onRecoger, ocupado, economia }) {
   const { info, poseida } = item;
   const [inclinacion, setInclinacion] = useState(REPOSO);
   const [inspeccion, setInspeccion] = useState(null); // { rect } | null
+  const [efecto, setEfecto] = useState(null); // { id, nivel, ganancia } | null
   const cartaRef = useRef(null);
   const inspeccionRef = useRef(null);
   inspeccionRef.current = inspeccion;
@@ -32,6 +35,7 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
   useEffect(() => {
     setInclinacion(REPOSO);
     setInspeccion(null);
+    setEfecto(null);
   }, [info.id]);
 
   useEffect(() => {
@@ -63,7 +67,7 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
         <div className={styles.escena} onPointerMove={alMover} onPointerLeave={() => setInclinacion(REPOSO)}>
           <div
             ref={cartaRef}
-            className={`${styles.carta3d} ${color ? styles.conResplandor : ''} ${poseida ? styles.pulsable : ''} ${inspeccion ? styles.oculta : ''}`}
+            className={`${styles.carta3d} ${color ? styles.conResplandor : ''} ${poseida ? styles.pulsable : ''} ${inspeccion ? styles.oculta : ''} ${efecto ? styles.subiendo : ''}`}
             role={poseida ? 'button' : undefined}
             tabIndex={poseida ? 0 : undefined}
             aria-label={poseida ? 'Inspeccionar la carta en grande' : undefined}
@@ -80,6 +84,9 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
             </div>
           </div>
           {poseida && <p className={styles.ayuda}>Pulsa la carta para inspeccionarla en grande</p>}
+          {efecto && (
+            <EfectoNivel key={efecto.id} nivel={efecto.nivel} ganancia={efecto.ganancia} onFin={() => setEfecto(null)} />
+          )}
         </div>
 
         <div className={styles.datos}>
@@ -109,6 +116,14 @@ export default function CartaDetalle({ item, nombreSet, onClose, onPrev, onNext,
             )}
           </div>
           {poseida && info.text && <p className={styles.texto}>{info.text}</p>}
+          {poseida && economia && (
+            <MejorarCarta
+              info={info}
+              poseida={poseida}
+              economia={economia}
+              onSubida={(datos) => setEfecto({ id: Date.now(), ...datos })}
+            />
+          )}
 
           <div className={styles.botones}>
             {poseida && (

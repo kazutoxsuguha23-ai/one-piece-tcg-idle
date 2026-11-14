@@ -286,6 +286,7 @@ export default function AlbumView({ catalogo, economia, onCerrar }) {
           onNext={() => moverDetalle(1)}
           onRecoger={recogerCarta}
           ocupado={ocupado}
+          economia={economia}
         />
       )}
     </div>

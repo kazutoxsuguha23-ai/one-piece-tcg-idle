@@ -6,7 +6,7 @@ import styles from './TableHud.module.css';
 export default function TableHud({
   modo, nombre, monedas, produccion, pendiente, capSeg, aviso, esAdmin, calidad, sinSobres,
   pagina, totalPaginas, productoNombre, restantes, cartaActual, indice, total, lote,
-  onTienda, onAlbum, onColeccion, onCatalogo, onCalidad, onAdmin, onSalir,
+  onTienda, onAlbum, onColeccion, onMejoras, onCatalogo, onCalidad, onAdmin, onSalir,
   onPagina, onVolver, onZoom, onAbrir, onAbrirTodos, onSaltar, onSaltarTodo, onDetener,
 }) {
   return (
@@ -65,7 +65,7 @@ export default function TableHud({
               <button type="button" onClick={onTienda}>Tienda</button>
               <button type="button" onClick={onAlbum}>Álbum</button>
               <button type="button" onClick={onColeccion}>Colección</button>
-              <button type="button" disabled title="Disponible en la Fase 9">Mejoras · F9</button>
+              <button type="button" onClick={onMejoras}>Mejoras</button>
               <button type="button" onClick={onCatalogo}>Catálogo</button>
               <button type="button" onClick={onCalidad}>Calidad: {calidad}</button>
               {esAdmin && <button type="button" onClick={onAdmin}>Admin (F2)</button>}
