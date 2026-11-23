@@ -5,8 +5,9 @@
 - [~] Fase 6 (mesa 3D): REHECHA con el diseño nuevo (sin cartas en la mesa)
 - [~] Fase 7 (sobres y apertura): VERIFICADA por el usuario (SQL, tienda, compra, apertura, rasgado OK). Añadidos: abrir en masa y zoom en resultados (pendiente de verificar)
 - [x] Fase 8 Álbum 3D (+ inspección con zoom): VERIFICADA por el usuario
-- [~] Fase 9 Mejoras y duplicados: entregada, pendiente de verificar
-- [ ] Fases 10-12 (seguridad y pruebas, optimización, publicación)
+- [x] Fase 9 Mejoras y duplicados: VERIFICADA por el usuario
+- [~] Fase 10 Seguridad y pruebas: entregada, pendiente de verificar (flujo 'Pruebas' en Actions)
+- [ ] Fases 11-12 (optimización, publicación)
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
@@ -51,6 +52,14 @@
 - Front: MejorarCarta (en la ficha del álbum), BotonConfirmar (confirmación de 2 pasos), EfectoNivel (destello + chispas + "¡NIVEL N!" + brillo de la carta), MejorasPanel (botón Mejoras de la mesa), upgradeService. Los números salen SIEMPRE del servidor.
 - Equilibrio (carta Rara, 1.5/s): amortización de un nivel ~1 h (nivel 1), ~11 h (50), ~31 h (75); llegar al 100 cuesta ~1e7 monedas. Es una propuesta: ajustar jugando.
 
+## Fase 10 — seguridad y pruebas
+- Auditoría: BUG corregido (el registro tomaba la 1.ª IP de x-forwarded-for, falsificable: ahora cf-connecting-ip / última IP + límite global de 60/h); sin límites en funciones de juego (ahora 0005); permisos por defecto de objetos futuros cerrados; sin CSP (añadida en index.html).
+- supabase/migrations/0005_seguridad.sql: enforce_rate_limit + 9 funciones regeneradas desde 0002-0004 con 1 línea añadida (collect_all/card, buy_pack, open_pack, card_upgrade_info, upgrade_card, sell_card_duplicates, sell_duplicates_bulk, buy_upgrade). SIEMPRE ejecutar la última; si se re-ejecuta 0002-0004, re-ejecutar 0005.
+- Pruebas (se ejecutan en GitHub Actions, flujo "Pruebas", archivo .github/workflows/tests.yml creado a mano desde ci/tests.yml): 33 de JavaScript/estáticas (comprobado que detectan fallos introducidos a propósito) + ~235 comprobaciones SQL contra un PostgreSQL real (tests/sql/run.sh: simula Supabase, aplica migraciones 0001-0005, catálogo de prueba, permisos/RLS, sobres, 3000 aperturas con estadística de probabilidades, cobro, mejoras, ventas, límites, admin).
+- LAS PRUEBAS SQL NUNCA SE HAN EJECUTADO todavía (sin PostgreSQL en el entorno de Claude): el primer resultado puede traer fallos de las propias pruebas; corregir con los registros de Actions.
+- SEGURIDAD.md: qué cubre y qué NO.
+- Edge Function register: volver a pegarla en Supabase (cambió).
+
 ## Imágenes reales en WebGL (pendiente, opcional)
 - Requiere crear el proxy gratuito de Cloudflare (cloudflare/image-proxy.js) y pegar su URL en src/imageConfig.js (IMAGE_PROXY_URL).
 - Sin proxy: cartas y sobres se dibujan por código (funciona igual).
@@ -71,4 +80,4 @@
 - SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12). Keep-alive anti-pausa pendiente.
 
 ## Siguiente
-Fase 10: Seguridad y pruebas (revisar RLS y funciones, límites de frecuencia, validaciones, pruebas de integridad de la economía, anti-abuso).
+Fase 11: Optimización (rendimiento 3D, tamaño del paquete, carga de imágenes, limpieza de código no usado como Card3D).

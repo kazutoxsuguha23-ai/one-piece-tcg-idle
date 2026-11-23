@@ -21,6 +21,7 @@ const MENSAJES = {
   insufficient_copies: 'No tienes suficientes copias repetidas (la primera copia no cuenta)',
   no_duplicates: 'No tienes copias repetidas que vender (la primera copia está protegida)',
   upgrade_not_found: 'Esa mejora no existe',
+  rate_limited: 'Demasiadas acciones seguidas. Espera unos segundos e inténtalo de nuevo.',
 };
 
 export function traducirError(error) {

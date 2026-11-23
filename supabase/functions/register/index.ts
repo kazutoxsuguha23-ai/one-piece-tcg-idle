@@ -6,6 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const EMAIL_DOMAIN = 'opidle.app';
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const MAX_REGISTROS_POR_HORA_Y_IP = 10;
+const MAX_REGISTROS_POR_HORA_TOTAL = 60; // tope global: frena ataques que cambian de IP
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,6 +36,19 @@ async function sha256Hex(texto: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// IP del cliente. OJO: la PRIMERA IP de x-forwarded-for la escribe el propio cliente (se puede falsificar
+// para esquivar el límite). Se usa la que añade Cloudflare (cf-connecting-ip) o, si no está, la ÚLTIMA
+// de x-forwarded-for, que es la que añade la infraestructura.
+function ipCliente(req: Request): string {
+  const cf = req.headers.get('cf-connecting-ip');
+  if (cf) return cf.trim();
+  const partes = (req.headers.get('x-forwarded-for') ?? '')
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return partes.length > 0 ? partes[partes.length - 1] : 'desconocida';
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Método no permitido' }, 405);
@@ -56,8 +70,8 @@ Deno.serve(async (req: Request) => {
   const password = String(cuerpo?.password ?? '');
   const inviteCode = String(cuerpo?.inviteCode ?? '').trim();
 
-  // 1) Límite de frecuencia por IP (la IP se guarda solo como hash)
-  const ip = (req.headers.get('x-forwarded-for') ?? 'desconocida').split(',')[0].trim();
+  // 1) Límites de frecuencia: por IP (se guarda solo como hash) y uno global
+  const ip = ipCliente(req);
   const { data: permitido, error: errLimite } = await admin.rpc('consume_rate_limit', {
     p_key: `register:${await sha256Hex(ip)}`,
     p_max: MAX_REGISTROS_POR_HORA_Y_IP,
@@ -68,6 +82,13 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Error interno' }, 500);
   }
   if (!permitido) return json({ error: 'Demasiados intentos. Inténtalo más tarde.' }, 429);
+
+  const { data: permitidoGlobal } = await admin.rpc('consume_rate_limit', {
+    p_key: 'register:global',
+    p_max: MAX_REGISTROS_POR_HORA_TOTAL,
+    p_window_seconds: 3600,
+  });
+  if (permitidoGlobal === false) return json({ error: 'Demasiados registros ahora mismo. Inténtalo más tarde.' }, 429);
 
   // 2) Validaciones
   if (!USERNAME_RE.test(username)) {
