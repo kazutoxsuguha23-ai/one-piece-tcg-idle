@@ -54,3 +54,8 @@ begin
   perform set_config('request.jwt.claim.sub', '', false);
 end;
 $$;
+
+-- Las migraciones cierran el permiso de ejecución por defecto, así que las funciones de ayuda
+-- hay que abrirlas a propósito: las pruebas las llaman mientras se hacen pasar por anon / authenticated.
+-- (Esto es solo del entorno de pruebas; no afecta a tu base de datos real.)
+grant execute on all functions in schema t to public;
