@@ -7,21 +7,28 @@
 - [x] Fase 8 Álbum 3D (+8b inspección con zoom) — verificada
 - [x] Fase 9 Mejoras y duplicados — verificada
 - [x] Fase 10 Seguridad y pruebas — VERIFICADA por el usuario (pruebas JS y SQL en verde en Actions; 0005 y Edge Function register aplicadas en Supabase)
-- [~] Fase 11 Optimización — EN CURSO (ver abajo)
-- [ ] Fase 12 Publicación y limpieza
+- [x] Fase 11 Optimización — VERIFICADA por el usuario (11a: sin Card3D/gsap/zustand, reloj de economía a 1 s y pausado con pestaña oculta; build verde y todo funciona)
+- [~] Fase 12 Publicación y limpieza — EN CURSO (ver abajo)
 
 ## Fase 11 — optimización
-### 11a (entregada, pendiente de verificar)
+### 11a (verificada)
 - Card3D.jsx ELIMINADO (solo se usaba tipoEfecto): tipoEfecto ahora está en utils/rarityStyle.js y RevealStage lo importa de ahí.
 - gsap ELIMINADO (solo se usaba en useAnimatedNumber): reescrito con requestAnimationFrame (mismo frenado suave). zustand eliminado de package.json (nunca se usó).
 - useEconomy: el reloj que calcula lo "pendiente" va cada 1 s (antes 0,5 s) y se DETIENE con la pestaña oculta. Menos re-renders de toda la mesa y el álbum.
 - Three.js ya iba en un trozo aparte (TableView y TableScene son lazy): el login no lo descarga.
 - Descartado por ahora: manualChunks en vite.config.js (riesgo sin poder compilar aquí, poco beneficio).
-### Ideas para 11b (pendiente de medir)
+### Ideas para 11b (NO necesarias por ahora: sin tirones notados; retomar si aparecen)
 - La mesa 3D se re-renderiza en cada tick de la economía porque `economia` y varias funciones cambian de identidad: estabilizar (useMemo/useCallback/refs) y envolver TableScene en React.memo.
-- Tamaño de cards.json (5596 cartas) y de los bundles: revisar el log de `npm run build` en el flujo "Desplegar en GitHub Pages".
+- Medido en el build: login ~109 KB gzip (index); tras entrar +199 KB (TableView) +49 KB (TableScene), casi todo Three.js. Aviso de >500 kB es solo informativo. cards.json se carga aparte (sin medir).
 - Imágenes: carga perezosa ya activa en álbum/resultados; revisar peso al abrir sets grandes.
 - Medir FPS reales en el móvil/PC del usuario (no se puede medir desde el entorno de Claude).
+
+## Fase 12 — publicación y limpieza (EN CURSO)
+- Workflows actualizados a acciones con Node 24: checkout@v7, setup-node@v7 (node-version 22), configure-pages@v6, upload-pages-artifact@v5, deploy-pages@v5 (versiones comprobadas en la búsqueda). Quita los avisos de Node 20. Copia en ci/tests.yml.
+- NUEVO keep-alive.yml: lunes y jueves hace una lectura de game_config con la clave pública de src/config.js (evita la pausa de Supabase a los 7 días). Ojo: GitHub desactiva los flujos programados tras 60 días sin actividad en el repo; si pasa, reactivarlos en Actions.
+- OPI_SECRET_KEY: la Edge Function ya la lee (si no existe, usa la antigua). Pendiente del usuario: crear el secreto en Supabase > Edge Functions > Secrets con la clave sb_secret_ y luego comprobar que registrar una cuenta sigue funcionando.
+- README.md final añadido.
+- Pendiente: verificar los workflows en verde, el keep-alive manual (Run workflow) y el secreto OPI_SECRET_KEY.
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
@@ -75,8 +82,7 @@
 - El 3D y la mayoría del front nunca se han visto desde el entorno de Claude (sin navegador, red ni Postgres): validar con capturas del usuario.
 - Los admin pueden LEER filas de todos por RLS: el cliente SIEMPRE filtra por user_id.
 - Algunas cartas no tienen imagen en la API. Marca "SAMPLE" heredada de la fuente. DON!! = "DON!! Card".
-- Avisos de Node 20 en Actions (no son errores): Fase 12.
-- SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027 (usar OPI_SECRET_KEY, Fase 12). Keep-alive anti-pausa de Supabase pendiente (Fase 12).
+- SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027: sustituir por OPI_SECRET_KEY (Fase 12, paso manual del usuario).
 
 ## Siguiente
-Terminar Fase 11 (verificar 11a, medir, decidir 11b). Esperar "pasemos a la siguiente" antes de la Fase 12.
+Verificar la Fase 12. Después el proyecto queda cerrado; cualquier mejora nueva (imágenes reales en 3D con proxy Cloudflare, rasgado más realista, equilibrio de economía) será una fase extra a petición del usuario.
