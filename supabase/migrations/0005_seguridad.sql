@@ -604,11 +604,14 @@ $$;
 -- ===================== 2. PERMISOS POR DEFECTO DE OBJETOS FUTUROS ============
 -- Supabase da por defecto permisos amplios a anon/authenticated sobre lo que se crea. Se cierra:
 -- cualquier tabla o función nueva nace SIN acceso para ellos y hay que concedérselo a propósito.
+-- OJO: el permiso de ejecución para PUBLIC es un valor por defecto GLOBAL de PostgreSQL; para quitarlo
+-- hay que revocarlo SIN "in schema" (con "in schema" no tiene efecto).
 do $$
 begin
   alter default privileges for role postgres in schema public revoke all on tables from anon, authenticated;
   alter default privileges for role postgres in schema public revoke all on sequences from anon, authenticated;
   alter default privileges for role postgres in schema public revoke execute on functions from anon, authenticated, PUBLIC;
+  alter default privileges for role postgres revoke execute on functions from PUBLIC;
 exception when others then
   raise notice 'No se pudieron endurecer los permisos por defecto: %', sqlerrm;
 end;
