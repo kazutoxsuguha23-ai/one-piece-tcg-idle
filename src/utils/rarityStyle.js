@@ -11,3 +11,13 @@ export function colorRareza(info) {
 export function etiquetaVariante(info) {
   return `${info.rarity}${info.manga ? ' · Manga' : info.sp ? ' · SP' : info.alt ? ' · Arte alternativo' : ''}`;
 }
+
+// Efecto visual 3D del revelado según la rareza / variante (antes vivía en Card3D.jsx).
+export function tipoEfecto(c) {
+  if (c.manga) return { color: '#ff5fa2', chispas: 26 };
+  if (c.sp) return { color: '#6fd8ff', chispas: 22 };
+  if (c.rarity === 'SEC' || c.rarity === 'TR') return { color: '#ffd24a', chispas: 20 };
+  if (c.rarity === 'SR') return { color: '#cfd8e3', chispas: 10 };
+  if (c.alt) return { color: '#b48cff', chispas: 8 };
+  return null;
+}

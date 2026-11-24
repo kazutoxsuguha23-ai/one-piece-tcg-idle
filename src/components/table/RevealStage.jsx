@@ -4,7 +4,7 @@ import { Sparkles } from '@react-three/drei';
 import { AdditiveBlending } from 'three';
 import { getCardBackTexture, getCardFaceTexture, getGlowTexture } from '../../utils/cardTexture.js';
 import { loadRemoteTexture } from '../../utils/imageLoader.js';
-import { tipoEfecto } from './Card3D.jsx';
+import { tipoEfecto } from '../../utils/rarityStyle.js';
 
 const limitar = (v, a, b) => Math.min(b, Math.max(a, v));
 const BORDE = '#e8e4d8';

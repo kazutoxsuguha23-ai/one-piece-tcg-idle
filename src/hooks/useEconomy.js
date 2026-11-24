@@ -3,7 +3,8 @@ import { collectAll, collectCard, fetchMyCards } from '../services/economyServic
 import { fetchPublicConfig } from '../services/authService.js';
 
 // Economía en pantalla. El SERVIDOR decide el saldo: aquí solo se muestra una estimación
-// que avanza cada medio segundo y se corrige con la respuesta del servidor al recoger.
+// que avanza cada segundo y se corrige con la respuesta del servidor al recoger.
+// El reloj se detiene mientras la pestaña está oculta (no gasta batería ni CPU en segundo plano).
 export function useEconomy(jugador) {
   const [coins, setCoins] = useState(0);
   const [cartas, setCartas] = useState([]);
@@ -33,8 +34,23 @@ export function useEconomy(jugador) {
   }, [jugador, cargarCartas]);
 
   useEffect(() => {
-    const id = setInterval(() => setAhora(Date.now()), 500);
-    return () => clearInterval(id);
+    let id = null;
+    const parar = () => {
+      if (id !== null) clearInterval(id);
+      id = null;
+    };
+    const iniciar = () => {
+      if (id !== null) return;
+      setAhora(Date.now());
+      id = setInterval(() => setAhora(Date.now()), 1000);
+    };
+    const alCambiarVisibilidad = () => (document.hidden ? parar() : iniciar());
+    alCambiarVisibilidad();
+    document.addEventListener('visibilitychange', alCambiarVisibilidad);
+    return () => {
+      parar();
+      document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+    };
   }, []);
 
   const capSeg =
