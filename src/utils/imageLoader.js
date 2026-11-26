@@ -31,8 +31,15 @@ export function getTexturaCargada(url) {
   return textura;
 }
 
+// Las imágenes de internet pasan por el proxy (CORS). Las imágenes PROPIAS de la web (una ruta como
+// "packs/op15eb04.webp", guardada en la carpeta public/) se cargan directamente: no hace falta proxy.
+const esExterna = (url) => /^https?:\/\//i.test(url);
+const direccionDe = (url) => (esExterna(url)
+  ? `${IMAGE_PROXY_URL}?url=${encodeURIComponent(url)}`
+  : `${import.meta.env.BASE_URL}${url.replace(/^\.?\//, '')}`);
+
 export function loadRemoteTexture(url) {
-  if (!IMAGE_PROXY_URL || !url) return Promise.resolve(null);
+  if (!url || (esExterna(url) && !IMAGE_PROXY_URL)) return Promise.resolve(null);
   const hecha = getTexturaCargada(url);
   if (hecha) return Promise.resolve(hecha);
   if (promesas.has(url)) return promesas.get(url);
@@ -42,7 +49,7 @@ export function loadRemoteTexture(url) {
     new TextureLoader()
       .setCrossOrigin('anonymous')
       .load(
-        `${IMAGE_PROXY_URL}?url=${encodeURIComponent(url)}`,
+        direccionDe(url),
         (textura) => {
           textura.colorSpace = SRGBColorSpace;
           textura.anisotropy = 4;
@@ -65,7 +72,6 @@ export function loadRemoteTexture(url) {
 // Descarga varias imágenes a la vez y espera a que terminen (máximo `limiteMs`, para no quedarse parado
 // si alguna tarda). Nunca falla: lo que no llegue a tiempo se sigue cargando y aparece después.
 export function precargarImagenes(urls, limiteMs = 5000) {
-  if (!IMAGE_PROXY_URL) return Promise.resolve();
   const unicas = [...new Set(urls)].filter(Boolean);
   if (unicas.length === 0) return Promise.resolve();
   let temporizador;
