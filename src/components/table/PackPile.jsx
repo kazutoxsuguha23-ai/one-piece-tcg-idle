@@ -3,7 +3,7 @@ import { BoxGeometry, MeshStandardMaterial } from 'three';
 import {
   getLabelTexture, getPackArtTexture, getPackBackTexture, loadRealPackTexture,
 } from '../../utils/packTexture.js';
-import { PACK_H, PACK_W } from './PackModel.jsx';
+import { PACK_H, PACK_W, cortar } from './PackModel.jsx';
 
 // Geometría y material del borde compartidos por todos los sobres de la mesa (muy ligero).
 const GEO = new BoxGeometry(PACK_W, 0.1, PACK_H);
@@ -25,16 +25,20 @@ export default function PackPile({ producto, cantidad, x, z, onSelect }) {
 
   useEffect(() => () => { document.body.style.cursor = 'auto'; }, []);
 
+  // La imagen se ajusta a la proporción del sobre (sin estirarla) en una copia, para no tocar la original.
+  const frenteAjustado = useMemo(() => cortar(frente, 0, 1), [frente]);
+  useEffect(() => () => frenteAjustado.dispose(), [frenteAjustado]);
+
   const materiales = useMemo(
     () => [
       BORDE,
       BORDE,
-      new MeshStandardMaterial({ map: frente, roughness: 0.4, metalness: 0.1 }),
+      new MeshStandardMaterial({ map: frenteAjustado, roughness: 0.4, metalness: 0.1 }),
       new MeshStandardMaterial({ map: dorso, roughness: 0.5 }),
       BORDE,
       BORDE,
     ],
-    [frente, dorso],
+    [frenteAjustado, dorso],
   );
   useEffect(() => () => { materiales[2].dispose(); materiales[3].dispose(); }, [materiales]);
 

@@ -6,11 +6,31 @@ export const PACK_H = 1.9;
 export const PACK_T = 0.1;
 export const PACK_TAPA = 0.3;
 
-// Una copia de la textura que solo enseña la franja desde..hasta (0 = abajo, 1 = arriba).
-function cortar(textura, desde, hasta) {
+const ASPECTO_SOBRE = PACK_W / PACK_H;
+
+// Zona de la imagen que se usa para rellenar el sobre SIN deformarla ("cover": se recorta lo que sobra
+// por los lados o por arriba y abajo, centrado). Devuelve fracciones de la imagen: x, y, ancho, alto.
+export function recorteCover(textura, aspecto = ASPECTO_SOBRE) {
+  const img = textura.image;
+  const ancho = img?.naturalWidth || img?.width || 0;
+  const alto = img?.naturalHeight || img?.height || 0;
+  if (!ancho || !alto) return { x: 0, y: 0, w: 1, h: 1 };
+  const proporcion = ancho / alto;
+  if (proporcion > aspecto) {
+    const w = aspecto / proporcion; // imagen más ancha que el sobre: se recortan los lados
+    return { x: (1 - w) / 2, y: 0, w, h: 1 };
+  }
+  const h = proporcion / aspecto; // imagen más alta que el sobre: se recorta arriba y abajo
+  return { x: 0, y: (1 - h) / 2, w: 1, h };
+}
+
+// Una copia de la textura que solo enseña la franja desde..hasta del sobre (0 = abajo, 1 = arriba),
+// con la imagen ya ajustada a la proporción del sobre.
+export function cortar(textura, desde, hasta) {
+  const r = recorteCover(textura);
   const t = textura.clone();
-  t.repeat.set(1, hasta - desde);
-  t.offset.set(0, desde);
+  t.repeat.set(r.w, (hasta - desde) * r.h);
+  t.offset.set(r.x, r.y + desde * r.h);
   t.needsUpdate = true;
   return t;
 }
