@@ -38,6 +38,13 @@ const direccionDe = (url) => (esExterna(url)
   ? `${IMAGE_PROXY_URL}?url=${encodeURIComponent(url)}`
   : `${import.meta.env.BASE_URL}${url.replace(/^\.?\//, '')}`);
 
+// Dirección lista para usar en una etiqueta <img> normal (p. ej. en la tienda): las imágenes de internet
+// pasan por el proxy y las propias de la web se piden directamente. Devuelve null si no se puede.
+export function direccionImagen(url) {
+  if (!url || (esExterna(url) && !IMAGE_PROXY_URL)) return null;
+  return direccionDe(url);
+}
+
 export function loadRemoteTexture(url) {
   if (!url || (esExterna(url) && !IMAGE_PROXY_URL)) return Promise.resolve(null);
   const hecha = getTexturaCargada(url);

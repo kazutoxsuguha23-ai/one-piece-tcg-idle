@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatNumber } from '../utils/format.js';
 import { getPackArtTexture } from '../utils/packTexture.js';
+import { direccionImagen } from '../utils/imageLoader.js';
 import styles from './ShopPanel.module.css';
 
 const TIPOS = [
@@ -11,13 +12,35 @@ const TIPOS = [
 ];
 const CANTIDADES = [1, 5, 10];
 
+// Miniatura del producto: la imagen real del sobre (la misma que en la mesa) y, si el producto no tiene
+// imagen o no carga, el sobre dibujado por código. Las imágenes se piden al desplazarse (loading="lazy").
 function Miniatura({ producto }) {
+  const [fallo, setFallo] = useState(false);
   const ref = useRef(null);
+  const url = producto.config?.art_url;
+  const src = useMemo(() => direccionImagen(url), [url]);
+  const conImagen = Boolean(src) && !fallo;
+
   useEffect(() => {
+    if (conImagen) return;
     const textura = getPackArtTexture(producto);
     const ctx = ref.current?.getContext('2d');
     if (ctx && textura.image) ctx.drawImage(textura.image, 0, 0, 54, 96);
-  }, [producto]);
+  }, [producto, conImagen]);
+
+  if (conImagen) {
+    return (
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className={styles.mini}
+        onError={() => setFallo(true)}
+      />
+    );
+  }
   return <canvas ref={ref} width={54} height={96} className={styles.mini} />;
 }
 
