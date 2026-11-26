@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import { AdditiveBlending } from 'three';
 import { getCardBackTexture, getCardFaceTexture, getGlowTexture } from '../../utils/cardTexture.js';
-import { loadRemoteTexture } from '../../utils/imageLoader.js';
+import { getTexturaCargada, loadRemoteTexture } from '../../utils/imageLoader.js';
 import { tipoEfecto } from '../../utils/rarityStyle.js';
 
 const limitar = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -31,7 +31,8 @@ function CartaActual({ carta, conEfectos, onAvanzar }) {
   const halo = useRef();
   const tiempo = useRef(0);
   const giro = useRef({ x: 0, y: 0, visX: 0, visY: 0 });
-  const [cara, setCara] = useState(() => getCardFaceTexture(info));
+  // Si la imagen real ya está precargada, la carta sale con ella desde el primer fotograma.
+  const [cara, setCara] = useState(() => getTexturaCargada(info.image) ?? getCardFaceTexture(info));
   const dorso = useMemo(() => getCardBackTexture(), []);
   const brillo = useMemo(() => getGlowTexture(), []);
   const efecto = tipoEfecto(info);
@@ -111,7 +112,7 @@ function CartaSaliente({ carta, onFin }) {
   const grupo = useRef();
   const tiempo = useRef(0);
   const terminado = useRef(false);
-  const cara = useMemo(() => getCardFaceTexture(carta.info), [carta]);
+  const cara = useMemo(() => getTexturaCargada(carta.info.image) ?? getCardFaceTexture(carta.info), [carta]);
   const dorso = useMemo(() => getCardBackTexture(), []);
 
   useFrame((_, delta) => {

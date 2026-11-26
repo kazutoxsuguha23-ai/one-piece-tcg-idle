@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { loadCatalog } from '../services/catalogService.js';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber.js';
 import { usePacks } from '../hooks/usePacks.js';
+import { precargarImagenes } from '../utils/imageLoader.js';
 import TableHud from './TableHud.jsx';
 import ModalPanel from './ModalPanel.jsx';
 import EconomyPanel from './EconomyPanel.jsx';
@@ -128,6 +129,9 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     try {
       const r = await packs.abrir(productoActivo.product_id);
       const cartas = construirCartas(r);
+      // Se descargan las imágenes reales de las cartas ANTES de enseñarlas (máx. 5 s), para que cada
+      // carta salga ya con su imagen y no se vea la carta dibujada cambiando.
+      await precargarImagenes(cartas.map((c) => c.info.image));
       // Si falla el refresco de la colección no pasa nada: las cartas ya están guardadas en el servidor.
       await economia.recargarCartas().catch(() => {});
       setLote((l) => (l ? { ...l, hechos: l.hechos + 1, acumuladas: [...l.acumuladas, ...cartas] } : l));

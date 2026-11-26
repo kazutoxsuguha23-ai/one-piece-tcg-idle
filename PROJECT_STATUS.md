@@ -8,7 +8,14 @@
 - [x] Fase 9 Mejoras y duplicados — verificada
 - [x] Fase 10 Seguridad y pruebas — VERIFICADA por el usuario (pruebas JS y SQL en verde en Actions; 0005 y Edge Function register aplicadas en Supabase)
 - [x] Fase 11 Optimización — VERIFICADA por el usuario (11a: sin Card3D/gsap/zustand, reloj de economía a 1 s y pausado con pestaña oculta; build verde y todo funciona)
-- [~] Fase 12 Publicación y limpieza — EN CURSO (ver abajo)
+- [x] Fase 12 Publicación y limpieza — VERIFICADA por el usuario (workflows en Node 24, keep-alive, OPI_SECRET_KEY creada y registro probado, README)
+
+**PLAN ORIGINAL COMPLETADO (Fases 1-12).** Cualquier mejora nueva se trata como fase extra a petición del usuario.
+
+## Fases extra
+- [~] Fase 13 Imágenes reales en 3D — ENTREGADA, pendiente de verificar
+- [ ] Fase 14 Rasgado del sobre realista (estilo Pokémon TCG Pocket)
+
 
 ## Fase 11 — optimización
 ### 11a (verificada)
@@ -23,12 +30,20 @@
 - Imágenes: carga perezosa ya activa en álbum/resultados; revisar peso al abrir sets grandes.
 - Medir FPS reales en el móvil/PC del usuario (no se puede medir desde el entorno de Claude).
 
-## Fase 12 — publicación y limpieza (EN CURSO)
+## Fase 12 — publicación y limpieza (VERIFICADA)
 - Workflows actualizados a acciones con Node 24: checkout@v7, setup-node@v7 (node-version 22), configure-pages@v6, upload-pages-artifact@v5, deploy-pages@v5 (versiones comprobadas en la búsqueda). Quita los avisos de Node 20. Copia en ci/tests.yml.
 - NUEVO keep-alive.yml: lunes y jueves hace una lectura de game_config con la clave pública de src/config.js (evita la pausa de Supabase a los 7 días). Ojo: GitHub desactiva los flujos programados tras 60 días sin actividad en el repo; si pasa, reactivarlos en Actions.
-- OPI_SECRET_KEY: la Edge Function ya la lee (si no existe, usa la antigua). Pendiente del usuario: crear el secreto en Supabase > Edge Functions > Secrets con la clave sb_secret_ y luego comprobar que registrar una cuenta sigue funcionando.
+- OPI_SECRET_KEY: creada en Supabase > Edge Functions > Secrets; la Edge Function la lee primero (si no existe, usa la antigua).
 - README.md final añadido.
-- Pendiente: verificar los workflows en verde, el keep-alive manual (Run workflow) y el secreto OPI_SECRET_KEY.
+- Verificado por el usuario: workflows, keep-alive y OPI_SECRET_KEY (registro de cuenta funciona).
+
+## Fase 13 — imágenes reales en 3D (pendiente de verificar)
+- Proxy de Cloudflare creado por el usuario: https://opi-imagenes.kazutoxsuguha23.workers.dev (código en cloudflare/image-proxy.js; solo acepta el origen de la web y hosts de la lista blanca). IMAGE_PROXY_URL puesto en src/imageConfig.js.
+- Las cartas del revelado usan la MISMA imagen (info.image de optcgapi) que el álbum: la carta que decide el servidor es la que se muestra.
+- imageLoader.js: caché con límite de 40 texturas (las antiguas se liberan con dispose para no llenar la memoria gráfica), caché de fallos 60 s, getTexturaCargada() y precargarImagenes() (máx. 5 s).
+- TableView.abrirSobre: precarga las imágenes de las cartas mientras el sobre se abre ("abriendo"), así salen ya con imagen. RevealStage: carta actual y saliente usan la imagen real si está cargada (antes la saliente se dibujaba por código).
+- Sobres: art_url de los OPxx (images.scrydex.com, NO verificado). Si falla se ve el sobre dibujado.
+- Pendiente de verificar en navegador: que salen las imágenes, orden/efectos de rareza intactos, y que "Abrir todos" no se ralentiza ni gasta mucha memoria.
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
@@ -66,9 +81,8 @@
 - Edge Function register: usa cf-connecting-ip / última IP de x-forwarded-for + límite global 60/h.
 - SEGURIDAD.md: qué cubre y qué NO.
 
-## Imágenes reales en WebGL (pendiente, opcional)
-- Requiere el proxy gratuito de Cloudflare (cloudflare/image-proxy.js) y pegar su URL en src/imageConfig.js (IMAGE_PROXY_URL).
-- Sin proxy: cartas y sobres de la mesa 3D se dibujan por código.
+## Imágenes reales en WebGL (hecho en la Fase 13)
+- Sin proxy configurado, cartas y sobres de la mesa 3D se dibujan por código.
 - art_url de los OPxx apunta a images.scrydex.com (NO verificado); si falla, sobre dibujado.
 - Cartas por sobre: 6 (página oficial asia-en); un minorista dice 12 para inglés. Configurable (slots).
 - Pendiente de pulido: rasgado del sobre más realista cuando haya imágenes reales (ajustar PACK_TAPA).
@@ -82,7 +96,9 @@
 - El 3D y la mayoría del front nunca se han visto desde el entorno de Claude (sin navegador, red ni Postgres): validar con capturas del usuario.
 - Los admin pueden LEER filas de todos por RLS: el cliente SIEMPRE filtra por user_id.
 - Algunas cartas no tienen imagen en la API. Marca "SAMPLE" heredada de la fuente. DON!! = "DON!! Card".
-- SUPABASE_SERVICE_ROLE_KEY heredada se retira a principios de 2027: sustituir por OPI_SECRET_KEY (Fase 12, paso manual del usuario).
 
 ## Siguiente
-Verificar la Fase 12. Después el proyecto queda cerrado; cualquier mejora nueva (imágenes reales en 3D con proxy Cloudflare, rasgado más realista, equilibrio de economía) será una fase extra a petición del usuario.
+Fase extra en curso: 13 (imágenes 3D) y luego 14 (rasgado). Otras posibles:
+- Rasgado del sobre más realista (progresivo, borde irregular, destello).
+- Equilibrar la economía jugando (game_config "economy" y "upgrades").
+- Optimización 11b si aparecen tirones (estabilizar props de TableScene + React.memo).
