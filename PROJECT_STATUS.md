@@ -13,8 +13,8 @@
 **PLAN ORIGINAL COMPLETADO (Fases 1-12).** Cualquier mejora nueva se trata como fase extra a petición del usuario.
 
 ## Fases extra
-- [~] Fase 13 Imágenes reales en 3D — ENTREGADA, pendiente de verificar
-- [ ] Fase 14 Rasgado del sobre realista (estilo Pokémon TCG Pocket)
+- [x] Fase 13 Imágenes reales en 3D — VERIFICADA por el usuario (cartas, sobres, estirado corregido, EB/PRB, starter decks locales, miniaturas de la tienda)
+- [~] Fase 14 Rasgado del sobre realista (estilo Pokémon TCG Pocket) — 14a ENTREGADA, pendiente de verificar
 
 
 ## Fase 11 — optimización
@@ -37,13 +37,22 @@
 - README.md final añadido.
 - Verificado por el usuario: workflows, keep-alive y OPI_SECRET_KEY (registro de cuenta funciona).
 
-## Fase 13 — imágenes reales en 3D (pendiente de verificar)
-- Proxy de Cloudflare creado por el usuario: https://opi-imagenes.kazutoxsuguha23.workers.dev (código en cloudflare/image-proxy.js; solo acepta el origen de la web y hosts de la lista blanca). IMAGE_PROXY_URL puesto en src/imageConfig.js.
-- Las cartas del revelado usan la MISMA imagen (info.image de optcgapi) que el álbum: la carta que decide el servidor es la que se muestra.
-- imageLoader.js: caché con límite de 40 texturas (las antiguas se liberan con dispose para no llenar la memoria gráfica), caché de fallos 60 s, getTexturaCargada() y precargarImagenes() (máx. 5 s).
-- TableView.abrirSobre: precarga las imágenes de las cartas mientras el sobre se abre ("abriendo"), así salen ya con imagen. RevealStage: carta actual y saliente usan la imagen real si está cargada (antes la saliente se dibujaba por código).
-- Sobres: art_url de los OPxx (images.scrydex.com, NO verificado). Si falla se ve el sobre dibujado.
-- Pendiente de verificar en navegador: que salen las imágenes, orden/efectos de rareza intactos, y que "Abrir todos" no se ralentiza ni gasta mucha memoria.
+## Fase 13 — imágenes reales en 3D (VERIFICADA)
+- Proxy de Cloudflare (Worker `opi-imagenes`): https://opi-imagenes.kazutoxsuguha23.workers.dev. Worker v2 (cloudflare/image-proxy.js): tiempo límite 15 s, 1 reintento, cabeceras de navegador y mensaje de error con la causa. Solo acepta el origen de la web y hosts de la lista blanca. IMAGE_PROXY_URL en src/imageConfig.js.
+- Cartas del revelado: misma imagen (info.image de optcgapi) que el álbum. imageLoader.js: caché de 40 texturas con dispose, caché de fallos 60 s, getTexturaCargada(), precargarImagenes() (máx. 5 s) y direccionImagen() para <img>. TableView.abrirSobre precarga las imágenes antes de enseñar las cartas.
+- Imágenes de sobres (pack_products.config.art_url): booster OPxx -> images.scrydex.com/onepiece/OPxx-s1/large; EB y PRB -> mismo patrón con SQL (los que no existan se ven dibujados); OP14EB04 -> web oficial (op14/img_item01.webp); OP15EB04 y starter decks ST01-ST36 -> imágenes PROPIAS en public/packs/ (ruta relativa "packs/xxx.webp", se cargan sin proxy; la web de Bandai no contestaba al Worker para OP15).
+- Cambiar la imagen de un sobre: subir el archivo a public/packs/ y `update public.pack_products set config = config || jsonb_build_object('art_url','packs/archivo.webp') where product_id='XXX';`. Quitarla: `config - 'art_url'`.
+- Estirado: PackModel/PackPile ajustan la imagen tipo "cover" (recorte centrado sin deformar, función recorteCover/cortar).
+- Tienda: las miniaturas (ShopPanel) usan la misma imagen del sobre (<img loading="lazy">) y, si falla o no hay, el sobre dibujado.
+
+## Fase 14 — rasgado realista (EN CURSO)
+### 14a (entregada, pendiente de verificar)
+- PackModel: la tira de arriba se divide en 10 trozos que se despegan uno tras otro según el progreso del rasgado, cada uno con torsión distinta (borde irregular); brillo en el punto de corte; guía luminosa que pulsa mientras el sobre está cerrado; montón de cartas (dorso) que asoma por la abertura; resplandor y destello al romperse; la tira sale volando cuando el rasgado está casi completo (p > 0.93).
+- InspectPack: el corte avanza al ritmo del dedo (umbral = ancho del sobre en pantalla), el sentido se fija al empezar, y el botón "Abrir" rasga más despacio (rapidez 9) que el gesto (14).
+- TableView: DURACION_RASGADO_MS = 1300: las cartas no se enseñan antes de ese tiempo desde el rasgado, para que la animación se vea entera aunque el servidor conteste rápido.
+- Sin probar en navegador (no hay desde el entorno de Claude): ajustes finos pendientes según capturas/descripción del usuario (curvatura, cantidad de trozos, brillo, tiempos).
+### Ideas para 14b (opcional)
+- Curvatura real del papel (geometría deformada), arrugas/brillo foil, partículas al romperse, sonido.
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.

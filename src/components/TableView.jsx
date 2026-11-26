@@ -19,6 +19,7 @@ const TableScene = lazy(() => import('./table/TableScene.jsx'));
 
 const POR_PAGINA = 12;
 const RETRASO_SIGUIENTE_MS = 450;
+const DURACION_RASGADO_MS = 1300; // tiempo mínimo antes de enseñar las cartas: así se ve entero el rasgado
 const limitar = (v, a, b) => Math.min(b, Math.max(a, v));
 
 function leerCalidad() {
@@ -127,11 +128,14 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     setModo('abriendo');
     setAviso('');
     try {
+      const inicio = performance.now();
       const r = await packs.abrir(productoActivo.product_id);
       const cartas = construirCartas(r);
       // Se descargan las imágenes reales de las cartas ANTES de enseñarlas (máx. 5 s), para que cada
       // carta salga ya con su imagen y no se vea la carta dibujada cambiando.
       await precargarImagenes(cartas.map((c) => c.info.image));
+      const falta = DURACION_RASGADO_MS - (performance.now() - inicio);
+      if (falta > 0) await new Promise((resolver) => { setTimeout(resolver, falta); });
       // Si falla el refresco de la colección no pasa nada: las cartas ya están guardadas en el servidor.
       await economia.recargarCartas().catch(() => {});
       setLote((l) => (l ? { ...l, hechos: l.hechos + 1, acumuladas: [...l.acumuladas, ...cartas] } : l));
