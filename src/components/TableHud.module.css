@@ -19,6 +19,9 @@
 @keyframes pulso { from { transform: scale(1); } to { transform: scale(1.12); } }
 .abajo { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .pista { margin: 0; padding: 6px 12px; background: rgba(15,23,32,0.8); border-radius: 8px; font-size: 0.8rem; text-align: center; max-width: 560px; }
+.textoCarta { max-width: min(560px, 92vw); max-height: 30vh; overflow-y: auto; padding: 10px 14px; background: rgba(255,252,245,0.96); color: #3a2b2f; border: 2px solid #f0b3cc; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; text-align: left; white-space: pre-wrap; pointer-events: auto; }
+.textoCarta p { margin: 0 0 6px; }
+.textoCarta em { display: block; text-align: right; color: #c2417a; font-style: italic; }
 .botones { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
 .botones button { padding: 9px 12px; border-radius: 9px; border: 1px solid #3d5068; background: rgba(36,50,70,0.92); color: inherit; cursor: pointer; font-size: 0.85rem; }
 .botones button:disabled { opacity: 0.45; cursor: default; }

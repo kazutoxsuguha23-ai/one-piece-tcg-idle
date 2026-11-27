@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadCatalog } from '../services/catalogService.js';
+import { completarCatalogo } from '../services/cartasEspeciales.js';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber.js';
 import { usePacks } from '../hooks/usePacks.js';
 import { precargarImagenes } from '../utils/imageLoader.js';
@@ -67,6 +68,19 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     loadCatalog().then(setCatalogo).catch(() => setCatalogo(null));
   }, []);
 
+  // Cartas que tienes pero no están en cards.json (p. ej. las cartitas del sobre secreto): se piden a la
+  // base de datos una sola vez y se añaden al catálogo para que el álbum y la colección las muestren.
+  const intentadas = useRef(new Set());
+  useEffect(() => {
+    if (!catalogo) return;
+    const faltan = economia.filas.map((f) => f.card_id).filter((id) => !catalogo.byId.has(id) && !intentadas.current.has(id));
+    if (faltan.length === 0) return;
+    faltan.forEach((id) => intentadas.current.add(id));
+    completarCatalogo(catalogo, faltan)
+      .then((cambio) => { if (cambio) setCatalogo({ ...catalogo }); })
+      .catch(() => {});
+  }, [catalogo, economia.filas.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Lluvia de monedas cada vez que recoges algo (desde la Colección).
   useEffect(() => {
     if (ultimaRecogida && ultimaRecogida.cantidad > 0) setBurst({ id: ultimaRecogida.id });
@@ -99,6 +113,18 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     [catalogo],
   );
 
+  // Si un sobre trae cartas que no están en el catálogo de la web, se piden antes de enseñarlas.
+  const asegurarCartas = useCallback(async (r) => {
+    if (!catalogo) return;
+    const ids = (r.cards ?? []).map((c) => c.card_id);
+    if (!ids.some((id) => !catalogo.byId.has(id))) return;
+    try {
+      if (await completarCatalogo(catalogo, ids)) setCatalogo({ ...catalogo });
+    } catch {
+      /* si falla, se enseñan dibujadas con su código */
+    }
+  }, [catalogo]);
+
   const seleccionarPila = useCallback((id) => {
     setProductoId(id);
     setAviso('');
@@ -130,6 +156,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     try {
       const inicio = performance.now();
       const r = await packs.abrir(productoActivo.product_id);
+      await asegurarCartas(r);
       const cartas = construirCartas(r);
       // Se descargan las imágenes reales de las cartas ANTES de enseñarlas (máx. 5 s), para que cada
       // carta salga ya con su imagen y no se vea la carta dibujada cambiando.
@@ -154,7 +181,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
         setModo('inspeccion');
       }
     }
-  }, [productoActivo, catalogo, packs, economia, construirCartas]);
+  }, [productoActivo, catalogo, packs, economia, construirCartas, asegurarCartas]);
 
   const abrirUno = useCallback(() => {
     setLote(null);
@@ -203,6 +230,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     try {
       while (hechos < l.total) {
         const r = await packs.abrir(productoActivo.product_id);
+        await asegurarCartas(r);
         acumuladas = [...acumuladas, ...construirCartas(r)];
         hechos += 1;
         setLote((x) => (x ? { ...x, hechos, acumuladas } : x));
@@ -213,7 +241,7 @@ export default function TableView({ jugador, economia, esAdmin, onAdmin, onSalir
     await economia.recargarCartas().catch(() => {});
     setResultado(null);
     setModo('resultados');
-  }, [productoActivo, packs, economia, construirCartas]);
+  }, [productoActivo, packs, economia, construirCartas, asegurarCartas]);
 
   // Seguridad: detiene la apertura en masa. Si ya se abrió algún sobre, enseña lo conseguido.
   const detenerLote = useCallback(() => {

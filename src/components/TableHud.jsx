@@ -96,6 +96,12 @@ export default function TableHud({
         )}
         {modo === 'revelado' && (
           <>
+            {cartaActual?.info.carta && cartaActual.info.text && (
+              <div className={styles.textoCarta}>
+                <p>{cartaActual.info.text}</p>
+                {cartaActual.info.firma && <em>{cartaActual.info.firma}</em>}
+              </div>
+            )}
             <p className={styles.pista}>Toca la carta para pasar a la siguiente · Arrastra para girarla</p>
             <div className={styles.botones}>
               {lote && lote.total > 1 ? (

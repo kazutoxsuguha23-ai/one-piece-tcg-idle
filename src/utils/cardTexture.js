@@ -1,7 +1,9 @@
 import { CanvasTexture, SRGBColorSpace } from 'three';
+import { dibujarCarta } from './cartaTexture.js';
 
 // Dibuja una carta con su nombre, rareza, coste y poder. No usa imágenes externas,
 // así que funciona sin CORS y también para las cartas que no tienen imagen.
+// Las cartas especiales (info.carta = true) se dibujan como una cartita de papel blanco con texto.
 const COLORES = {
   red: '#c0392b', green: '#2e8b57', blue: '#2f6fb5', purple: '#7d4cb0', black: '#2b2b33', yellow: '#d4a72c',
 };
@@ -53,6 +55,12 @@ function aTextura(canvas) {
 export function getCardFaceTexture(carta) {
   const clave = carta.id ?? carta.card_id;
   if (cache.has(clave)) return cache.get(clave);
+
+  if (carta.carta) {
+    const especial = aTextura(dibujarCarta(carta));
+    cache.set(clave, especial);
+    return especial;
+  }
 
   const c = lienzo();
   const ctx = c.getContext('2d');

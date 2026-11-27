@@ -15,6 +15,7 @@
 ## Fases extra
 - [x] Fase 13 Imágenes reales en 3D — VERIFICADA por el usuario (cartas, sobres, estirado corregido, EB/PRB, starter decks locales, miniaturas de la tienda)
 - [~] Fase 14 Rasgado del sobre realista (estilo Pokémon TCG Pocket) — 14a ENTREGADA, pendiente de verificar
+- [~] Extra: SOBRE SECRETO de cartitas (aniversario) — ENTREGADO, pendiente de verificar
 
 
 ## Fase 11 — optimización
@@ -53,6 +54,14 @@
 - Sin probar en navegador (no hay desde el entorno de Claude): ajustes finos pendientes según capturas/descripción del usuario (curvatura, cantidad de trozos, brillo, tiempos).
 ### Ideas para 14b (opcional)
 - Curvatura real del papel (geometría deformada), arrugas/brillo foil, partículas al romperse, sonido.
+
+## Extra — sobre secreto de cartitas (ENTREGADO, pendiente de verificar)
+- Qué es: un sobre que NO se puede comprar (solo lo da el admin con F2 > Dar sobres > "Sobre secreto"), con 6 cartas en orden (CARTA-01..06) dibujadas como cartitas de papel blanco con título, texto y firma. Se abre y revela como un sobre normal.
+- Instalar/quitar por SQL, sin tocar GitHub: supabase/extras/sobre_secreto_instalar.sql (reejecutable: actualiza los textos) y sobre_secreto_quitar.sql (opción A borra todo; opción B solo oculta el sobre con enabled=false). NO son migraciones (run.sh solo ejecuta supabase/migrations).
+- Cómo evita la compra: pack_products.kind = 'promo' (la tienda no lo lista) y price = 999999999999999999999999999999 (> tope de monedas 1e29, buy_pack da insufficient_funds). config.mode = 'fixed' => open_pack da las 6 cartas base del set CARTA ordenadas por card_id.
+- Textos en la BASE DE DATOS (catalog_cards.meta: carta=true, titulo, texto, firma), no en el código (el repo es público). Las cartitas producen 0 monedas (game_config economy.base_by_rarity.CARTA = 0).
+- Código genérico: cualquier carta con meta.carta = true se dibuja como cartita. src/services/cartasEspeciales.js (completarCatalogo: pide a la BD las cartas que no estén en cards.json y las añade al catálogo en memoria), src/utils/cartaTexture.js (dibujo 640x896, auto-ajuste de letra), cardTexture.js (rama carta), rarityStyle.js (brillo rosa), TableView (carga las cartas desconocidas al abrir un sobre y al cargar la colección), TableHud (texto de la carta en HTML durante el revelado: legible en móvil).
+- Sin probar en navegador ni contra PostgreSQL (no hay en el entorno de Claude): el SQL se revisó a mano y el dibujo se probó con un lienzo simulado.
 
 ## Diseño de la mesa (decidido por el usuario)
 - La mesa NO tiene cartas: solo los sobres comprados, apilados por set (12 por página, 6x2). Se seleccionan.
